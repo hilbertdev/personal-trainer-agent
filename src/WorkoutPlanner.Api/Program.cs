@@ -3,10 +3,14 @@ using WorkoutPlanner.Application.Analysis;
 using WorkoutPlanner.Application.Scheduling;
 using WorkoutPlanner.Application.Services;
 using WorkoutPlanner.Domain.Interfaces;
-using WorkoutPlanner.Infrastructure.Persistence;
+using WorkoutPlanner.Infrastructure;
 using WorkoutPlanner.Infrastructure.Seeding;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("WorkoutPlanner")
+    ?? builder.Configuration["WORKOUTPLANNER_CONNECTION_STRING"]
+    ?? throw new InvalidOperationException(
+        "Set ConnectionStrings:WorkoutPlanner or WORKOUTPLANNER_CONNECTION_STRING to a Postgres connection string.");
 
 builder.Services
     .AddControllers()
@@ -19,8 +23,8 @@ builder.Services.AddSingleton<FatigueScoreCalculator>();
 builder.Services.AddSingleton<RecoveryHeuristicAnalyzer>();
 builder.Services.AddSingleton<IFatigueAnalyzer, FatigueAnalyzer>();
 builder.Services.AddSingleton<IPhaseScheduler, HypertrophyPhaseScheduler>();
-builder.Services.AddSingleton<IWorkoutRepository, InMemoryWorkoutRepository>();
 builder.Services.AddSingleton<IWorkoutPlanningService, WorkoutPlanningService>();
+builder.Services.AddWorkoutPlannerInfrastructure(connectionString);
 
 var app = builder.Build();
 

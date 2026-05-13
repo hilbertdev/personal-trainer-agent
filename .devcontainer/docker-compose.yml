@@ -1,0 +1,12 @@
+services:
+  devcontainer:
+    image: mcr.microsoft.com/devcontainers/dotnet:10.0
+    command: sleep infinity
+    environment:
+      WORKOUTPLANNER_CONNECTION_STRING: Host=db;Port=5432;Database=workout_planner;Username=workout_planner;Password=workout_planner
+      ConnectionStrings__WorkoutPlanner: Host=db;Port=5432;Database=workout_planner;Username=workout_planner;Password=workout_planner
+    volumes:
+      - ..:/workspace:cached
+    depends_on:
+      db:
+        condition: service_healthy
