@@ -3,7 +3,7 @@ namespace WorkoutPlanner.Api.Contracts;
 public sealed record WorkoutSummaryResponse(
     DateOnly? WeekStart,
     DateOnly? WeekEnd,
-    int CalendarDays,
+    int TrackedDays,
     int TrainingDays,
     int RestDays,
     int HighIntensityDays,
