@@ -40,6 +40,8 @@ Start Postgres and the API:
 docker compose up --build db api
 ```
 
+Set `POSTGRES_PORT=5433` (or another open host port) before running compose if local Postgres already uses port 5432.
+
 Run the console planner against the compose Postgres database:
 
 ```bash
