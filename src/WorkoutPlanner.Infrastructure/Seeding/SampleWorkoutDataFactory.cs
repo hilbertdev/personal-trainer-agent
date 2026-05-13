@@ -4,7 +4,7 @@ using static WorkoutPlanner.Domain.Enums.IntensityLevel;
 using static WorkoutPlanner.Domain.Enums.MuscleGroup;
 using static WorkoutPlanner.Domain.Enums.WorkoutType;
 
-namespace WorkoutPlanner.ConsoleApp;
+namespace WorkoutPlanner.Infrastructure.Seeding;
 
 public static class SampleWorkoutDataFactory
 {
