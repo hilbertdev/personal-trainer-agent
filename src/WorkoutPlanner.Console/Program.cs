@@ -5,6 +5,7 @@ using WorkoutPlanner.Application.Services;
 using WorkoutPlanner.ConsoleApp;
 using WorkoutPlanner.Domain.Interfaces;
 using WorkoutPlanner.Infrastructure.Persistence;
+using WorkoutPlanner.Infrastructure.Seeding;
 
 var services = new ServiceCollection();
 
