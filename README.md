@@ -49,7 +49,3 @@ docker compose run --rm --build console
 ```
 
 The compose file creates a `workoutplanner-postgres-data` volume so workout rows survive container restarts.
-
-## Dev container
-
-Open the repository in a Dev Containers-compatible editor and reopen it in the `Workout Planner` container. The dev container starts the compose Postgres service and configures both supported connection string environment variables.
