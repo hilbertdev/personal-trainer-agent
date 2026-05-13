@@ -1,6 +1,5 @@
 **/bin/
 **/obj/
-.devcontainer/
 .git/
 .gitignore
 .vs/
