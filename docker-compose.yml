@@ -1,0 +1,46 @@
+name: workout-planner
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: workout_planner
+      POSTGRES_USER: workout_planner
+      POSTGRES_PASSWORD: workout_planner
+    ports:
+      - "5432:5432"
+    volumes:
+      - workoutplanner-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workout_planner -d workout_planner"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__WorkoutPlanner: Host=db;Port=5432;Database=workout_planner;Username=workout_planner;Password=workout_planner
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  console:
+    profiles:
+      - tools
+    build:
+      context: .
+      dockerfile: Dockerfile.console
+    environment:
+      WORKOUTPLANNER_CONNECTION_STRING: Host=db;Port=5432;Database=workout_planner;Username=workout_planner;Password=workout_planner
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  workoutplanner-postgres-data:
