@@ -63,7 +63,7 @@ public sealed class SqliteWorkoutRepository(SqliteConnectionFactory connectionFa
                 ParseDate(row.WorkoutDate),
                 Enum.Parse<WorkoutType>(row.WorkoutType),
                 exercisesByDate.GetValueOrDefault(ParseDate(row.WorkoutDate), []),
-                row.DurationMinutes,
+                (int)row.DurationMinutes,
                 Enum.Parse<IntensityLevel>(row.Intensity),
                 row.Notes))
             .ToList();
@@ -204,7 +204,7 @@ public sealed class SqliteWorkoutRepository(SqliteConnectionFactory connectionFa
                     e.sets AS Sets,
                     e.reps AS Reps,
                     e.rir_or_rpe AS RirOrRpe,
-                    COALESCE(group_concat(mg.muscle_group, '|'), '') AS MuscleGroups
+                    CAST(COALESCE(group_concat(mg.muscle_group, '|'), '') AS TEXT) AS MuscleGroups
                 FROM exercises e
                 LEFT JOIN exercise_muscle_groups mg ON mg.exercise_id = e.id
                 GROUP BY e.id, e.workout_date, e.sort_order, e.name, e.sets, e.reps, e.rir_or_rpe
@@ -223,7 +223,7 @@ public sealed class SqliteWorkoutRepository(SqliteConnectionFactory connectionFa
                     .Split('|', StringSplitOptions.RemoveEmptyEntries)
                     .Select(value => Enum.Parse<MuscleGroup>(value))
                     .ToList();
-            var exercise = new Exercise(row.Name, row.Sets, row.Reps, row.RirOrRpe, muscleGroups);
+            var exercise = new Exercise(row.Name, (int)row.Sets, row.Reps, row.RirOrRpe, muscleGroups);
 
             if (!exercisesByDate.TryGetValue(workoutDate, out var exercises))
             {
@@ -249,18 +249,31 @@ public sealed class SqliteWorkoutRepository(SqliteConnectionFactory connectionFa
         return DateOnly.ParseExact(date, DateFormat, CultureInfo.InvariantCulture);
     }
 
-    private sealed record WorkoutRow(
-        string WorkoutDate,
-        string WorkoutType,
-        int DurationMinutes,
-        string Intensity,
-        string? Notes);
+    private sealed class WorkoutRow
+    {
+        public string WorkoutDate { get; init; } = string.Empty;
 
-    private sealed record ExerciseRow(
-        string WorkoutDate,
-        string Name,
-        int Sets,
-        string Reps,
-        string? RirOrRpe,
-        string MuscleGroups);
+        public string WorkoutType { get; init; } = string.Empty;
+
+        public long DurationMinutes { get; init; }
+
+        public string Intensity { get; init; } = string.Empty;
+
+        public string? Notes { get; init; }
+    }
+
+    private sealed class ExerciseRow
+    {
+        public string WorkoutDate { get; init; } = string.Empty;
+
+        public string Name { get; init; } = string.Empty;
+
+        public long Sets { get; init; }
+
+        public string Reps { get; init; } = string.Empty;
+
+        public string? RirOrRpe { get; init; }
+
+        public string MuscleGroups { get; init; } = string.Empty;
+    }
 }

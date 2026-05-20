@@ -10,8 +10,8 @@ using WorkoutPlanner.Infrastructure;
 using WorkoutPlanner.Infrastructure.Seeding;
 
 var builder = WebApplication.CreateBuilder(args);
-var sqliteConnectionString = builder.Configuration.GetConnectionString("WorkoutPlannerSqlite")
-    ?? builder.Configuration["WORKOUTPLANNER_SQLITE_CONNECTION_STRING"]
+var sqliteConnectionString = builder.Configuration["WORKOUTPLANNER_SQLITE_CONNECTION_STRING"]
+    ?? builder.Configuration.GetConnectionString("WorkoutPlannerSqlite")
     ?? "Data Source=App_Data/workoutplanner.db";
 var corsPolicyName = "WorkoutPlannerCors";
 
