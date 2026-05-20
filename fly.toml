@@ -1,0 +1,26 @@
+app = "personal-trainer-agent-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.api"
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Production"
+  ASPNETCORE_URLS = "http://+:8080"
+  ConnectionStrings__WorkoutPlannerSqlite = "Data Source=/data/workoutplanner.db"
+
+[[mounts]]
+  source = "workoutplanner_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

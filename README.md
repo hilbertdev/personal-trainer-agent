@@ -1,51 +1,157 @@
 # personal-trainer-agent
 This is a project that will manage all my training and give recommendations daily based on my output
 
-## Workout Planner Phase 1
+## Phase 1 beta
 
-This repository contains a .NET 10 console MVP for workout fatigue analysis and hypertrophy phase projection.
+This beta keeps the existing Clean Architecture backend and adds only the launch surface needed to validate demand quickly:
 
-The app stores workout data in Postgres. Set a connection string before running locally:
+- `WorkoutPlanner.Domain` remains pure domain entities, enums, and interfaces.
+- `WorkoutPlanner.Application` keeps fatigue analysis, recovery heuristics, hypertrophy projections, and planning rules.
+- `WorkoutPlanner.Infrastructure` provides lightweight SQLite persistence.
+- `WorkoutPlanner.Api` is the ASP.NET Core Minimal API composition root.
+- `frontend/` is a static-friendly Next.js TypeScript app for Vercel.
 
-```bash
-export WORKOUTPLANNER_CONNECTION_STRING="Host=localhost;Port=5432;Database=workout_planner;Username=workout_planner;Password=workout_planner"
+The app defaults to SQLite at `App_Data/workoutplanner.db`, so beta hosting can start near $0/month without a managed database.
+
+## Recommended folder structure
+
+```text
+src/
+  WorkoutPlanner.Domain/          # Pure entities, enums, interfaces
+  WorkoutPlanner.Application/     # FatigueAnalyzer, HypertrophyPhaseScheduler, WorkoutPlanningService
+  WorkoutPlanner.Infrastructure/  # SQLite repositories and sample data
+  WorkoutPlanner.Api/             # Minimal API, CORS, Swagger, health checks
+  WorkoutPlanner.Console/         # CLI entry point using the same services
+frontend/                         # Next.js + TypeScript + Tailwind + shadcn-style UI
+Dockerfile.api                    # Backend container
+docker-compose.yml                # Local API + SQLite volume
+fly.toml                          # Cheap backend deployment config
 ```
 
-Run the app from the console project:
+## Local development
+
+Copy environment defaults:
 
 ```bash
-dotnet run --project src/WorkoutPlanner.Console
+cp .env.example .env
 ```
 
-## Agent API
+Restore and build the .NET solution:
 
-Agents such as OpenClaw can query workout information through the read-only API host:
+```bash
+dotnet restore
+dotnet build
+```
+
+Run the API:
 
 ```bash
 dotnet run --project src/WorkoutPlanner.Api
 ```
 
-Available agent routes:
+Run the frontend:
 
-- `GET /api/agent` - discover agent-oriented workout endpoints and operation ids.
-- `GET /api/agent/workouts/current-week` - inspect the current workout week, exercises, volume, and summary.
-- `GET /api/agent/workouts/analysis` - retrieve fatigue score, warnings, and recommended rest days.
-- `GET /api/agent/workouts/projection` - retrieve the four-week hypertrophy projection.
+```bash
+cd frontend
+npm install
+NEXT_PUBLIC_API_URL=http://localhost:8080 npm run dev
+```
+
+Swagger UI is available at `http://localhost:8080/swagger`.
+
+## API endpoints
+
+Beta endpoints:
+
+- `GET /health` - health check for hosts and containers.
+- `GET /api/workouts/sample` - returns sample weekly workout data from `SampleWorkoutDataFactory`.
+- `POST /api/workouts/analyze` - accepts weekly workout data, calls `IWorkoutPlanningService`, and returns fatigue analysis, projected hypertrophy weeks, recommendations, and warnings.
+- `GET /api/progress` - returns completed workouts persisted in SQLite.
+- `POST /api/progress` - stores a completed workout in SQLite.
+
+Existing agent discovery endpoints remain available:
+
+- `GET /api/agent`
+- `GET /api/agent/workouts/current-week`
+- `GET /api/agent/workouts/analysis`
+- `GET /api/agent/workouts/projection`
 
 ## Docker
 
-Start Postgres and the API:
+Start the API with a persistent SQLite volume:
 
 ```bash
-docker compose up --build db api
+docker compose up --build api
 ```
 
-Set `POSTGRES_PORT=5433` (or another open host port) before running compose if local Postgres already uses port 5432.
-
-Run the console planner against the compose Postgres database:
+Run the console planner against the same SQLite volume:
 
 ```bash
 docker compose run --rm --build console
 ```
 
-The compose file creates a `workoutplanner-postgres-data` volume so workout rows survive container restarts.
+The compose file creates a `workoutplanner-sqlite-data` volume so workout and progress rows survive container restarts.
+
+## Frontend features
+
+- Dashboard with current week, fatigue score, recovery status, progress bar, completed workout count, warnings, and recommendations.
+- Workout planner cards with completion checkboxes and expandable exercise details.
+- Four-week hypertrophy projection tabs.
+- Mobile-first responsive layout with dark mode.
+- API integration through `fetch` + React Query using `NEXT_PUBLIC_API_URL`.
+
+The frontend does not contain fatigue-analysis business logic; it renders the API response.
+
+## Cheapest beta hosting recommendation
+
+Use:
+
+- Backend: Fly.io with Docker + a tiny persistent volume for SQLite (`fly.toml` is included).
+- Frontend: Vercel free tier from `frontend/`.
+
+This avoids Kubernetes, managed Postgres, auth providers, and paid infrastructure while still giving HTTPS, health checks, CI/CD-friendly deploys, and a persistent beta database.
+
+## Exact beta deployment steps
+
+### 1. Deploy the backend to Fly.io
+
+```bash
+fly auth login
+fly apps create personal-trainer-agent-api
+fly volumes create workoutplanner_data --size 1 --region iad
+fly secrets set CORS_ALLOWED_ORIGINS=https://your-vercel-app.vercel.app
+fly deploy
+fly status
+fly checks list
+```
+
+The API URL will look like:
+
+```text
+https://personal-trainer-agent-api.fly.dev
+```
+
+### 2. Deploy the frontend to Vercel
+
+```bash
+cd frontend
+vercel link
+vercel env add NEXT_PUBLIC_API_URL production
+# value: https://personal-trainer-agent-api.fly.dev
+vercel deploy --prod
+```
+
+Or connect the repository in the Vercel dashboard:
+
+- Root directory: `frontend`
+- Framework preset: Next.js
+- Environment variable: `NEXT_PUBLIC_API_URL=https://personal-trainer-agent-api.fly.dev`
+
+### 3. Validate the beta
+
+```bash
+curl https://personal-trainer-agent-api.fly.dev/health
+curl https://personal-trainer-agent-api.fly.dev/api/workouts/sample
+```
+
+Open the Vercel URL on desktop and mobile, complete a workout, refresh, and confirm progress remains checked.

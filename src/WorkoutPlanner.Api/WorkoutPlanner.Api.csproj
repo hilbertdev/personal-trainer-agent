@@ -10,4 +10,8 @@
     <ProjectReference Include="..\WorkoutPlanner.Domain\WorkoutPlanner.Domain.csproj" />
     <ProjectReference Include="..\WorkoutPlanner.Infrastructure\WorkoutPlanner.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
 </Project>

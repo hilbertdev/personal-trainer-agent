@@ -8,14 +8,14 @@ using WorkoutPlanner.Infrastructure;
 using WorkoutPlanner.Infrastructure.Seeding;
 
 var services = new ServiceCollection();
-var connectionString = GetRequiredConnectionString();
+var connectionString = GetSqliteConnectionString();
 
 services.AddSingleton<FatigueScoreCalculator>();
 services.AddSingleton<RecoveryHeuristicAnalyzer>();
 services.AddSingleton<IFatigueAnalyzer, FatigueAnalyzer>();
 services.AddSingleton<IPhaseScheduler, HypertrophyPhaseScheduler>();
 services.AddSingleton<IWorkoutPlanningService, WorkoutPlanningService>();
-services.AddWorkoutPlannerInfrastructure(connectionString);
+services.AddSqliteWorkoutPlannerInfrastructure(connectionString);
 
 using var serviceProvider = services.BuildServiceProvider();
 
@@ -25,17 +25,12 @@ var result = await planningService.BuildPlanAsync(sampleWorkouts);
 
 ConsoleReportWriter.Print(result);
 
-static string GetRequiredConnectionString()
+static string GetSqliteConnectionString()
 {
-    const string primaryEnvironmentVariable = "WORKOUTPLANNER_CONNECTION_STRING";
-    const string dotNetEnvironmentVariable = "ConnectionStrings__WorkoutPlanner";
+    const string primaryEnvironmentVariable = "WORKOUTPLANNER_SQLITE_CONNECTION_STRING";
+    const string dotNetEnvironmentVariable = "ConnectionStrings__WorkoutPlannerSqlite";
 
-    var connectionString =
-        Environment.GetEnvironmentVariable(primaryEnvironmentVariable)
-        ?? Environment.GetEnvironmentVariable(dotNetEnvironmentVariable);
-
-    return string.IsNullOrWhiteSpace(connectionString)
-        ? throw new InvalidOperationException(
-            $"Set {primaryEnvironmentVariable} or {dotNetEnvironmentVariable} to a Postgres connection string.")
-        : connectionString;
+    return Environment.GetEnvironmentVariable(primaryEnvironmentVariable)
+        ?? Environment.GetEnvironmentVariable(dotNetEnvironmentVariable)
+        ?? "Data Source=App_Data/workoutplanner.db";
 }
