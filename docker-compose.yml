@@ -1,34 +1,23 @@
 name: workout-planner
 
 services:
-  db:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: workout_planner
-      POSTGRES_USER: workout_planner
-      POSTGRES_PASSWORD: workout_planner
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - workoutplanner-postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U workout_planner -d workout_planner"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   api:
     build:
       context: .
       dockerfile: Dockerfile.api
     environment:
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__WorkoutPlanner: Host=db;Port=5432;Database=workout_planner;Username=workout_planner;Password=workout_planner
+      ConnectionStrings__WorkoutPlannerSqlite: Data Source=/data/workoutplanner.db
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
     ports:
       - "8080:8080"
-    depends_on:
-      db:
-        condition: service_healthy
+    volumes:
+      - workoutplanner-sqlite-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   console:
     profiles:
@@ -37,10 +26,9 @@ services:
       context: .
       dockerfile: Dockerfile.console
     environment:
-      WORKOUTPLANNER_CONNECTION_STRING: Host=db;Port=5432;Database=workout_planner;Username=workout_planner;Password=workout_planner
-    depends_on:
-      db:
-        condition: service_healthy
+      WORKOUTPLANNER_SQLITE_CONNECTION_STRING: Data Source=/data/workoutplanner.db
+    volumes:
+      - workoutplanner-sqlite-data:/data
 
 volumes:
-  workoutplanner-postgres-data:
+  workoutplanner-sqlite-data:
