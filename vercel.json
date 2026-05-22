@@ -3,7 +3,7 @@
   "installCommand": "npm install --prefix frontend",
   "buildCommand": "npm run build --prefix frontend",
   "devCommand": "npm run dev --prefix frontend",
-  "outputDirectory": "frontend/.next",
+  "outputDirectory": "frontend/out",
   "env": {
     "NEXT_PUBLIC_API_URL": "https://personal-trainer-agent.fly.dev"
   }

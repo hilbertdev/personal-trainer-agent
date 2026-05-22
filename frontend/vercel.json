@@ -3,6 +3,7 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
+  "outputDirectory": "out",
   "env": {
     "NEXT_PUBLIC_API_URL": "https://personal-trainer-agent.fly.dev"
   }
