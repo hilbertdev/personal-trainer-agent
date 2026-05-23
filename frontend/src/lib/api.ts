@@ -97,8 +97,9 @@ export type ApiService = {
   recordCompletedWorkout: (workout: WorkoutDay) => Promise<WorkoutProgress>;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA !== "false";
+const API_URL = import.meta.env.VITE_API_URL ?? import.meta.env.NEXT_PUBLIC_API_URL;
+const USE_MOCK_DATA =
+  (import.meta.env.VITE_USE_MOCK_DATA ?? import.meta.env.NEXT_PUBLIC_USE_MOCK_DATA) !== "false";
 
 export class RealApiService implements ApiService {
   constructor(private readonly apiUrl: string) {}

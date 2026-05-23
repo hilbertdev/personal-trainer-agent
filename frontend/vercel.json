@@ -1,9 +1,11 @@
 {
-  "framework": "nextjs",
+  "framework": "vite",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
+  "outputDirectory": "dist",
   "env": {
-    "NEXT_PUBLIC_USE_MOCK_DATA": "true"
-  }
+    "VITE_USE_MOCK_DATA": "true"
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
 }

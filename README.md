@@ -9,7 +9,7 @@ This beta keeps the existing Clean Architecture backend and adds only the launch
 - `WorkoutPlanner.Application` keeps fatigue analysis, recovery heuristics, hypertrophy projections, and planning rules.
 - `WorkoutPlanner.Infrastructure` provides lightweight SQLite persistence.
 - `WorkoutPlanner.Api` is the ASP.NET Core Minimal API composition root.
-- `frontend/` is a static-friendly Next.js TypeScript app for Vercel.
+- `frontend/` is a static-friendly Vite + React TypeScript app for Vercel.
 
 The app defaults to SQLite at `App_Data/workoutplanner.db`, so beta hosting can start near $0/month without a managed database.
 
@@ -22,7 +22,7 @@ src/
   WorkoutPlanner.Infrastructure/  # SQLite repositories and sample data
   WorkoutPlanner.Api/             # Minimal API, CORS, Swagger, health checks
   WorkoutPlanner.Console/         # CLI entry point using the same services
-frontend/                         # Next.js + TypeScript + Tailwind + shadcn-style UI
+frontend/                         # Vite + React + TypeScript + Tailwind + shadcn-style UI
 Dockerfile.api                    # Backend container
 docker-compose.yml                # Local API + SQLite volume
 fly.toml                          # Cheap backend deployment config
@@ -54,7 +54,7 @@ Run the frontend:
 ```bash
 cd frontend
 npm install
-NEXT_PUBLIC_API_URL=http://localhost:8080 npm run dev
+VITE_API_URL=http://localhost:8080 npm run dev
 ```
 
 Swagger UI is available at `http://localhost:8080/swagger`.
@@ -98,7 +98,7 @@ The compose file creates a `workoutplanner-sqlite-data` volume so workout and pr
 - Workout planner cards with completion checkboxes and expandable exercise details.
 - Four-week hypertrophy projection tabs.
 - Mobile-first responsive layout with dark mode.
-- API integration through `fetch` + React Query using `NEXT_PUBLIC_API_URL`.
+- API integration through `fetch` + React Query using `VITE_API_URL`.
 
 The frontend does not contain fatigue-analysis business logic; it renders the API response.
 
@@ -136,7 +136,7 @@ https://personal-trainer-agent-api.fly.dev
 ```bash
 cd frontend
 vercel link
-vercel env add NEXT_PUBLIC_API_URL production
+vercel env add VITE_API_URL production
 # value: https://personal-trainer-agent-api.fly.dev
 vercel deploy --prod
 ```
@@ -144,8 +144,8 @@ vercel deploy --prod
 Or connect the repository in the Vercel dashboard:
 
 - Root directory: `frontend`
-- Framework preset: Next.js
-- Environment variable: `NEXT_PUBLIC_API_URL=https://personal-trainer-agent-api.fly.dev`
+- Framework preset: Vite
+- Environment variable: `VITE_API_URL=https://personal-trainer-agent-api.fly.dev`
 
 ### 3. Validate the beta
 
