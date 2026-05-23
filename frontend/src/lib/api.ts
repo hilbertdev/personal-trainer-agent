@@ -1,3 +1,11 @@
+import {
+  completedWorkoutFor,
+  mockInitialProgress,
+  mockWorkoutAnalysis,
+  mockWorkoutWeek,
+  summarizeWorkouts,
+} from "@/mock-data/workouts";
+
 export type WorkoutType =
   | "Push"
   | "Pull"
@@ -82,56 +90,150 @@ export type WorkoutProgress = {
   completedWorkouts: CompletedWorkout[];
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+export type ApiService = {
+  getSampleWorkout: () => Promise<WorkoutWeek>;
+  analyzeWorkout: (workouts: WorkoutDay[]) => Promise<WorkoutAnalysis>;
+  getProgress: () => Promise<WorkoutProgress>;
+  recordCompletedWorkout: (workout: WorkoutDay) => Promise<WorkoutProgress>;
+};
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA !== "false";
 
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(detail || `API request failed with ${response.status}`);
+export class RealApiService implements ApiService {
+  constructor(private readonly apiUrl: string) {}
+
+  getSampleWorkout() {
+    return this.apiFetch<WorkoutWeek>("/api/workouts/sample");
   }
 
-  return response.json() as Promise<T>;
+  analyzeWorkout(workouts: WorkoutDay[]) {
+    return this.apiFetch<WorkoutAnalysis>("/api/workouts/analyze", {
+      method: "POST",
+      body: JSON.stringify({
+        workouts: workouts.map((workout) => ({
+          date: workout.date,
+          workoutType: workout.workoutType,
+          exercises: workout.exercises,
+          durationMinutes: workout.durationMinutes,
+          intensity: workout.intensity,
+          notes: workout.notes,
+        })),
+      }),
+    });
+  }
+
+  getProgress() {
+    return this.apiFetch<WorkoutProgress>("/api/progress");
+  }
+
+  recordCompletedWorkout(workout: WorkoutDay) {
+    return this.apiFetch<WorkoutProgress>("/api/progress", {
+      method: "POST",
+      body: JSON.stringify({
+        workoutDate: workout.date,
+        workoutType: workout.workoutType,
+        notes: workout.notes,
+      }),
+    });
+  }
+
+  private async apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+    const response = await fetch(`${this.apiUrl}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...init?.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(detail || `API request failed with ${response.status}`);
+    }
+
+    return response.json() as Promise<T>;
+  }
 }
 
+export class MockApiService implements ApiService {
+  private progress = clone(mockInitialProgress);
+
+  async getSampleWorkout() {
+    await mockDelay();
+    return clone(mockWorkoutWeek);
+  }
+
+  async analyzeWorkout(workouts: WorkoutDay[]) {
+    await mockDelay();
+    const safeWorkouts = workouts.length > 0 ? workouts : mockWorkoutWeek.workouts;
+
+    return clone({
+      ...mockWorkoutAnalysis,
+      summary: summarizeWorkouts(safeWorkouts),
+    });
+  }
+
+  async getProgress() {
+    await mockDelay();
+    return clone(this.progress);
+  }
+
+  async recordCompletedWorkout(workout: WorkoutDay) {
+    await mockDelay();
+
+    if (!this.progress.completedWorkouts.some((completed) => completed.workoutDate === workout.date)) {
+      this.progress.completedWorkouts = [
+        ...this.progress.completedWorkouts,
+        completedWorkoutFor(workout),
+      ];
+      this.progress.completedCount = this.progress.completedWorkouts.length;
+      this.progress.lastCompletedWorkoutDate = workout.date;
+    }
+
+    return clone(this.progress);
+  }
+}
+
+const mockApiService = new MockApiService();
+const apiService: ApiService =
+  USE_MOCK_DATA || !API_URL ? mockApiService : withMockFallback(new RealApiService(API_URL));
+
 export function getSampleWorkout() {
-  return apiFetch<WorkoutWeek>("/api/workouts/sample");
+  return apiService.getSampleWorkout();
 }
 
 export function analyzeWorkout(workouts: WorkoutDay[]) {
-  return apiFetch<WorkoutAnalysis>("/api/workouts/analyze", {
-    method: "POST",
-    body: JSON.stringify({
-      workouts: workouts.map((workout) => ({
-        date: workout.date,
-        workoutType: workout.workoutType,
-        exercises: workout.exercises,
-        durationMinutes: workout.durationMinutes,
-        intensity: workout.intensity,
-        notes: workout.notes,
-      })),
-    }),
-  });
+  return apiService.analyzeWorkout(workouts);
 }
 
 export function getProgress() {
-  return apiFetch<WorkoutProgress>("/api/progress");
+  return apiService.getProgress();
 }
 
 export function recordCompletedWorkout(workout: WorkoutDay) {
-  return apiFetch<WorkoutProgress>("/api/progress", {
-    method: "POST",
-    body: JSON.stringify({
-      workoutDate: workout.date,
-      workoutType: workout.workoutType,
-      notes: workout.notes,
-    }),
-  });
+  return apiService.recordCompletedWorkout(workout);
+}
+
+function withMockFallback(realApiService: ApiService): ApiService {
+  return {
+    getSampleWorkout: () =>
+      realApiService.getSampleWorkout().catch(() => mockApiService.getSampleWorkout()),
+    analyzeWorkout: (workouts) =>
+      realApiService.analyzeWorkout(workouts).catch(() => mockApiService.analyzeWorkout(workouts)),
+    getProgress: () => realApiService.getProgress().catch(() => mockApiService.getProgress()),
+    recordCompletedWorkout: (workout) =>
+      realApiService
+        .recordCompletedWorkout(workout)
+        .catch(() => mockApiService.recordCompletedWorkout(workout)),
+  };
+}
+
+function mockDelay() {
+  const delay = 200 + Math.floor(Math.random() * 301);
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
 }
