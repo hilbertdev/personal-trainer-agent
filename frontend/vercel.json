@@ -4,6 +4,6 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://personal-trainer-agent.fly.dev"
+    "NEXT_PUBLIC_USE_MOCK_DATA": "true"
   }
 }
