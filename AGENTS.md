@@ -2,7 +2,7 @@
 
 ## Cursor Cloud specific instructions
 
-This is a .NET 10 workout planner with a Minimal API backend, a console entry point, and a Next.js beta frontend.
+This is a .NET 10 workout planner with a Minimal API backend, a console entry point, and a Vite + React beta frontend.
 
 ### Quick reference
 
