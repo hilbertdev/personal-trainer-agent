@@ -19,7 +19,7 @@ export function Checkbox({
       disabled={disabled}
       onCheckedChange={(value) => onCheckedChange(value === true)}
       className={cn(
-        "flex h-6 w-6 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-zinc-950 transition",
+        "flex h-6 w-6 items-center justify-center rounded-lg border border-zinc-300 bg-white text-zinc-950 transition dark:border-white/20 dark:bg-white/10",
         "data-[state=checked]:border-lime-300 data-[state=checked]:bg-lime-300",
       )}
     >

@@ -211,7 +211,7 @@ export function BetaDashboard() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#4d7c0f_0,#18181b_35%,#030712_75%)] px-4 py-5 text-white sm:px-6 lg:px-8">
+    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#bef264_0,#f4f4f5_35%,#e4e4e7_75%)] px-4 py-5 text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,#4d7c0f_0,#18181b_35%,#030712_75%)] dark:text-white sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-5">
         <header className="flex items-center justify-between gap-4">
           <div>
@@ -243,7 +243,7 @@ function Hero({ analysis, sample }: { analysis: WorkoutAnalysis; sample: Workout
         <h2 className="max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-6xl">
           Launch-ready workout planning without a live backend dependency.
         </h2>
-        <p className="mt-4 max-w-2xl text-base text-zinc-300 sm:text-lg">
+        <p className="mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-300 sm:text-lg">
           The frontend is running against mock services that preserve the backend response shapes,
           so the demo remains fully navigable while the API is offline.
         </p>
@@ -274,7 +274,7 @@ function WorkoutCard({
 }) {
   return (
     <Collapsible.Root open={expanded} onOpenChange={onExpandedChange}>
-      <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+      <div className="rounded-3xl border border-zinc-200 bg-white/70 p-4 dark:border-white/10 dark:bg-black/20">
         <div className="flex items-center gap-3">
           <Checkbox
             checked={completed || workout.isRestDay}
@@ -288,7 +288,7 @@ function WorkoutCard({
           <Collapsible.Trigger asChild>
             <button className="flex flex-1 items-center justify-between gap-3 text-left">
               <div>
-                <p className="text-sm text-zinc-400">{formatDate(workout.date)}</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatDate(workout.date)}</p>
                 <h3 className="text-lg font-bold">
                   {workout.workoutType} {workout.isRestDay ? "Recovery" : "Session"}
                 </h3>
@@ -298,19 +298,19 @@ function WorkoutCard({
                   {workout.intensity}
                 </Badge>
                 <ChevronDown
-                  className={cn("h-5 w-5 text-zinc-400 transition", expanded && "rotate-180")}
+                  className={cn("h-5 w-5 text-zinc-500 transition dark:text-zinc-400", expanded && "rotate-180")}
                 />
               </div>
             </button>
           </Collapsible.Trigger>
         </div>
-        <Collapsible.Content className="mt-4 space-y-3 border-t border-white/10 pt-4">
-          <p className="text-sm text-zinc-300">{workout.notes}</p>
+        <Collapsible.Content className="mt-4 space-y-3 border-t border-zinc-200 pt-4 dark:border-white/10">
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">{workout.notes}</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {workout.exercises.map((exercise) => (
-              <div key={exercise.name} className="rounded-2xl bg-white/[0.06] p-3">
+              <div key={exercise.name} className="rounded-2xl bg-zinc-100 p-3 dark:bg-white/[0.06]">
                 <p className="font-semibold">{exercise.name}</p>
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   {exercise.sets} sets x {exercise.reps}
                   {exercise.rirOrRpe ? ` | ${exercise.rirOrRpe}` : ""}
                 </p>
@@ -327,11 +327,11 @@ function ProjectedWeekGrid({ week }: { week: ProjectedWeek }) {
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       {week.workouts.map((workout) => (
-        <div key={`${week.weekNumber}-${workout.date}`} className="rounded-3xl bg-black/20 p-4">
-          <p className="text-sm text-zinc-400">{formatDate(workout.date)}</p>
+        <div key={`${week.weekNumber}-${workout.date}`} className="rounded-3xl bg-zinc-100 p-4 dark:bg-black/20">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatDate(workout.date)}</p>
           <h3 className="mt-1 font-bold">{workout.workoutType}</h3>
-          <p className="mt-3 text-sm text-zinc-300">{workout.notes}</p>
-          <div className="mt-4 flex items-center justify-between text-sm text-zinc-400">
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-300">{workout.notes}</p>
+          <div className="mt-4 flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-400">
             <span>{workout.totalSets} sets</span>
             <span>{workout.durationMinutes} min</span>
           </div>
@@ -353,8 +353,8 @@ function Recommendation({
       className={cn(
         "flex gap-3 rounded-3xl border p-4 text-sm",
         tone === "warning"
-          ? "border-amber-300/20 bg-amber-300/10 text-amber-50"
-          : "border-white/10 bg-white/[0.06] text-zinc-200",
+          ? "border-amber-300/40 bg-amber-100 text-amber-950 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-50"
+          : "border-zinc-200 bg-white/70 text-zinc-700 dark:border-white/10 dark:bg-white/[0.06] dark:text-zinc-200",
       )}
     >
       {tone === "warning" ? (
@@ -386,7 +386,7 @@ function Stat({
   value: string | number;
 }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+    <div className="rounded-3xl border border-zinc-200 bg-white/70 p-4 dark:border-white/10 dark:bg-black/20">
       <Icon className="mb-4 h-5 w-5 text-lime-300" />
       <p className="text-2xl font-black">{value}</p>
       <p className="text-sm text-zinc-400">{label}</p>
