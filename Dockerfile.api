@@ -1,15 +1,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY WorkoutPlanner.sln ./
-COPY src/WorkoutPlanner.Domain/WorkoutPlanner.Domain.csproj src/WorkoutPlanner.Domain/
-COPY src/WorkoutPlanner.Application/WorkoutPlanner.Application.csproj src/WorkoutPlanner.Application/
-COPY src/WorkoutPlanner.Infrastructure/WorkoutPlanner.Infrastructure.csproj src/WorkoutPlanner.Infrastructure/
-COPY src/WorkoutPlanner.Api/WorkoutPlanner.Api.csproj src/WorkoutPlanner.Api/
-RUN dotnet restore src/WorkoutPlanner.Api/WorkoutPlanner.Api.csproj
+COPY Training.sln ./
+COPY src/Training.Domain/Training.Domain.csproj src/Training.Domain/
+COPY src/Training.Application/Training.Application.csproj src/Training.Application/
+COPY src/Training.Infrastructure/Training.Infrastructure.csproj src/Training.Infrastructure/
+COPY src/Training.Strava/Training.Strava.csproj src/Training.Strava/
+COPY src/Training.Api/Training.Api.csproj src/Training.Api/
+RUN dotnet restore src/Training.Api/Training.Api.csproj
 
 COPY . .
-RUN dotnet publish src/WorkoutPlanner.Api/WorkoutPlanner.Api.csproj \
+RUN dotnet publish src/Training.Api/Training.Api.csproj \
     --configuration Release \
     --output /app/publish \
     /p:UseAppHost=false
@@ -22,10 +23,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ENV ASPNETCORE_URLS=http://+:8080
-ENV ConnectionStrings__WorkoutPlannerSqlite="Data Source=/data/workoutplanner.db"
+ENV ConnectionStrings__TrainingSqlite="Data Source=/data/training.db"
 EXPOSE 8080
 
 RUN mkdir -p /data
 
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "WorkoutPlanner.Api.dll"]
+ENTRYPOINT ["dotnet", "Training.Api.dll"]

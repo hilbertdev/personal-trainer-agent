@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Training.Application\Training.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrainingRuntimeModule Include="..\Training.Infrastructure\Training.Infrastructure.csproj" />
+    <TrainingRuntimeModule Include="..\Training.Strava\Training.Strava.csproj" />
+  </ItemGroup>
+
+  <Target Name="BuildTrainingRuntimeModules" BeforeTargets="Build">
+    <MSBuild
+      Projects="@(TrainingRuntimeModule)"
+      Targets="Build"
+      Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)" />
+  </Target>
+
+  <Target Name="CopyTrainingRuntimeModules" AfterTargets="Build">
+    <ItemGroup>
+      <TrainingRuntimeModuleOutput Include="..\Training.Infrastructure\bin\$(Configuration)\$(TargetFramework)\*.dll" />
+      <TrainingRuntimeModuleOutput Include="..\Training.Strava\bin\$(Configuration)\$(TargetFramework)\*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(TrainingRuntimeModuleOutput)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyTrainingRuntimeModulesToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <TrainingRuntimeModulePublishOutput Include="..\Training.Infrastructure\bin\$(Configuration)\$(TargetFramework)\*.dll" />
+      <TrainingRuntimeModulePublishOutput Include="..\Training.Strava\bin\$(Configuration)\$(TargetFramework)\*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(TrainingRuntimeModulePublishOutput)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

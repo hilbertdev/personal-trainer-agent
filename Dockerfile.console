@@ -1,15 +1,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY WorkoutPlanner.sln ./
-COPY src/WorkoutPlanner.Domain/WorkoutPlanner.Domain.csproj src/WorkoutPlanner.Domain/
-COPY src/WorkoutPlanner.Application/WorkoutPlanner.Application.csproj src/WorkoutPlanner.Application/
-COPY src/WorkoutPlanner.Infrastructure/WorkoutPlanner.Infrastructure.csproj src/WorkoutPlanner.Infrastructure/
-COPY src/WorkoutPlanner.Console/WorkoutPlanner.Console.csproj src/WorkoutPlanner.Console/
-RUN dotnet restore src/WorkoutPlanner.Console/WorkoutPlanner.Console.csproj
+COPY Training.sln ./
+COPY src/Training.Domain/Training.Domain.csproj src/Training.Domain/
+COPY src/Training.Application/Training.Application.csproj src/Training.Application/
+COPY src/Training.Infrastructure/Training.Infrastructure.csproj src/Training.Infrastructure/
+COPY src/Training.Console/Training.Console.csproj src/Training.Console/
+RUN dotnet restore src/Training.Console/Training.Console.csproj
 
 COPY . .
-RUN dotnet publish src/WorkoutPlanner.Console/WorkoutPlanner.Console.csproj \
+RUN dotnet publish src/Training.Console/Training.Console.csproj \
     --configuration Release \
     --output /app/publish \
     /p:UseAppHost=false
@@ -22,4 +22,4 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "WorkoutPlanner.Console.dll"]
+ENTRYPOINT ["dotnet", "Training.Console.dll"]
