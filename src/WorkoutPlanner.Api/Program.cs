@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Application.Analysis;
 using WorkoutPlanner.Application.Scheduling;
@@ -7,6 +9,7 @@ using WorkoutPlanner.Application.Services;
 using WorkoutPlanner.Domain.Entities;
 using WorkoutPlanner.Domain.Interfaces;
 using WorkoutPlanner.Infrastructure;
+using WorkoutPlanner.Infrastructure.Persistence;
 using WorkoutPlanner.Infrastructure.Seeding;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +51,7 @@ builder.Services.AddCors(options =>
         });
 });
 builder.Services.AddHealthChecks();
+builder.Services.AddDataProtection();
 
 builder.Services.AddSingleton<FatigueScoreCalculator>();
 builder.Services.AddSingleton<RecoveryHeuristicAnalyzer>();
@@ -55,9 +59,11 @@ builder.Services.AddSingleton<IFatigueAnalyzer, FatigueAnalyzer>();
 builder.Services.AddSingleton<IPhaseScheduler, HypertrophyPhaseScheduler>();
 builder.Services.AddSingleton<IWorkoutPlanningService, WorkoutPlanningService>();
 builder.Services.AddSqliteWorkoutPlannerInfrastructure(sqliteConnectionString);
+builder.Services.AddStravaIntegration(builder.Configuration, sqliteConnectionString);
 
 var app = builder.Build();
 
+await MigrateStravaDatabaseAsync(app.Services);
 await SeedSampleWorkoutDataAsync(app.Services);
 
 app.UseSwagger();
@@ -143,6 +149,13 @@ app.MapGet(
     .Produces<WorkoutProgressResponse>();
 
 await app.RunAsync();
+
+static async Task MigrateStravaDatabaseAsync(IServiceProvider services)
+{
+    await using var scope = services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<StravaDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 static async Task SeedSampleWorkoutDataAsync(IServiceProvider services)
 {
