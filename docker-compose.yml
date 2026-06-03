@@ -8,16 +8,41 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__TrainingSqlite: Data Source=/data/training.db
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
     ports:
       - "8080:8080"
     volumes:
-      - training-sqlite-data:/data
+      - workout-planner-sqlite:/data
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+        VITE_USE_MOCK_DATA: "false"
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  frontend-mock:
+    profiles:
+      - mock
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+        VITE_USE_MOCK_DATA: "true"
+    ports:
+      - "3000:80"
 
   console:
     profiles:
@@ -28,7 +53,7 @@ services:
     environment:
       TRAINING_SQLITE_CONNECTION_STRING: Data Source=/data/training.db
     volumes:
-      - training-sqlite-data:/data
+      - workout-planner-sqlite:/data
 
 volumes:
-  training-sqlite-data:
+  workout-planner-sqlite:

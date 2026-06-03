@@ -18,6 +18,7 @@ import {
   getProgress,
   getSampleWorkout,
   recordCompletedWorkout,
+  USE_MOCK_DATA,
   type ProjectedWeek,
   type WorkoutAnalysis,
   type WorkoutDay,
@@ -241,11 +242,14 @@ function Hero({ analysis, sample }: { analysis: WorkoutAnalysis; sample: Workout
           <Badge tone="zinc">{sample.summary.totalSets} sets</Badge>
         </div>
         <h2 className="max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-6xl">
-          Launch-ready workout planning without a live backend dependency.
+          {USE_MOCK_DATA
+            ? "Launch-ready workout planning without a live backend dependency."
+            : "Workout planning powered by your training API."}
         </h2>
         <p className="mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-300 sm:text-lg">
-          The frontend is running against mock services that preserve the backend response shapes,
-          so the demo remains fully navigable while the API is offline.
+          {USE_MOCK_DATA
+            ? "The frontend is running against mock services that preserve the backend response shapes, so the demo remains fully navigable while the API is offline."
+            : "Sample workouts, fatigue analysis, and progress are loaded from the ASP.NET API. If the API is unreachable, the dashboard falls back to the same mock data."}
         </p>
       </CardHeader>
       <div className="grid gap-3 sm:grid-cols-3">

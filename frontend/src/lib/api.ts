@@ -97,8 +97,9 @@ export type ApiService = {
   recordCompletedWorkout: (workout: WorkoutDay) => Promise<WorkoutProgress>;
 };
 
-const API_URL = import.meta.env.VITE_API_URL ?? import.meta.env.NEXT_PUBLIC_API_URL;
-const USE_MOCK_DATA =
+const API_URL =
+  import.meta.env.VITE_API_URL ?? import.meta.env.NEXT_PUBLIC_API_URL ?? "";
+export const USE_MOCK_DATA =
   (import.meta.env.VITE_USE_MOCK_DATA ?? import.meta.env.NEXT_PUBLIC_USE_MOCK_DATA) !== "false";
 
 export class RealApiService implements ApiService {
@@ -197,8 +198,9 @@ export class MockApiService implements ApiService {
 }
 
 const mockApiService = new MockApiService();
-const apiService: ApiService =
-  USE_MOCK_DATA || !API_URL ? mockApiService : withMockFallback(new RealApiService(API_URL));
+const apiService: ApiService = USE_MOCK_DATA
+  ? mockApiService
+  : withMockFallback(new RealApiService(API_URL));
 
 export function getSampleWorkout() {
   return apiService.getSampleWorkout();
