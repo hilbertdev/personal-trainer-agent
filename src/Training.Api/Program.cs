@@ -61,6 +61,10 @@ builder.Services.AddSingleton<IWorkoutProgressService, WorkoutProgressService>()
 builder.Services.AddSingleton<IWorkoutRecommendationService, WorkoutRecommendationService>();
 builder.Services.AddSingleton<IWorkoutSeedService, WorkoutSeedService>();
 RegisterInfrastructure(builder.Services, sqliteConnectionString);
+RegisterStrava(builder.Services, builder.Configuration);
+builder.Services.AddSingleton<ITrainingProgramService>(services => new TrainingProgramService(
+    services.GetRequiredService<ITrainingProgramRepository>(),
+    services.GetService<IActivityProvider>()));
 
 var app = builder.Build();
 
@@ -235,6 +239,31 @@ static void RegisterInfrastructure(IServiceCollection services, string sqliteCon
         ?? throw new InvalidOperationException("Training.Infrastructure SQLite registration method was not found.");
 
     registerMethod.Invoke(null, [services, sqliteConnectionString]);
+}
+
+static void RegisterStrava(IServiceCollection services, IConfiguration configuration)
+{
+    var accessToken = configuration["STRAVA_ACCESS_TOKEN"]
+        ?? configuration["Strava:AccessToken"];
+
+    if (string.IsNullOrWhiteSpace(accessToken))
+    {
+        return;
+    }
+
+    var baseAddress = configuration["STRAVA_BASE_URL"]
+        ?? configuration["Strava:BaseUrl"]
+        ?? "https://www.strava.com/api/v3/";
+    var stravaAssembly = LoadAssembly("Training.Strava");
+    var extensions = stravaAssembly.GetType("Training.Strava.ServiceCollectionExtensions")
+        ?? throw new InvalidOperationException("Training.Strava service registration type was not found.");
+    var registerMethod = extensions.GetMethod(
+        "AddStravaTrainingIntegration",
+        BindingFlags.Public | BindingFlags.Static,
+        [typeof(IServiceCollection), typeof(string), typeof(string)])
+        ?? throw new InvalidOperationException("Training.Strava registration method was not found.");
+
+    registerMethod.Invoke(null, [services, baseAddress, accessToken]);
 }
 
 static Assembly LoadAssembly(string assemblyName)

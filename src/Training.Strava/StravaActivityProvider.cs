@@ -32,46 +32,10 @@ public sealed class StravaActivityProvider(StravaClient client) : IActivityProvi
             activity.StartedAt,
             TimeSpan.FromSeconds(activity.ElapsedSeconds),
             sport,
-            Categorize(sport, activity.Name),
+            sport,
             activity.DistanceMeters,
             activity.AverageHeartRate is null ? null : (int)Math.Round(activity.AverageHeartRate.Value),
             activity.RelativeEffort,
             activity.Name);
-    }
-
-    private static string Categorize(string sport, string name)
-    {
-        if (sport.Contains("run", StringComparison.OrdinalIgnoreCase))
-        {
-            if (name.Contains("tempo", StringComparison.OrdinalIgnoreCase))
-            {
-                return "TempoRun";
-            }
-
-            if (name.Contains("interval", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Intervals";
-            }
-
-            if (name.Contains("long", StringComparison.OrdinalIgnoreCase))
-            {
-                return "LongRun";
-            }
-
-            if (name.Contains("recovery", StringComparison.OrdinalIgnoreCase))
-            {
-                return "RecoveryRun";
-            }
-
-            return "EasyRun";
-        }
-
-        if (sport.Contains("weight", StringComparison.OrdinalIgnoreCase)
-            || sport.Contains("strength", StringComparison.OrdinalIgnoreCase))
-        {
-            return "StrengthSession";
-        }
-
-        return "CrossTraining";
     }
 }

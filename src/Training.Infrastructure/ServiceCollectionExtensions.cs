@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new SqliteConnectionFactory(connectionString));
         services.AddSingleton<IWorkoutRepository, SqliteWorkoutRepository>();
         services.AddSingleton<IWorkoutProgressRepository, SqliteWorkoutProgressRepository>();
+        services.AddSingleton<ITrainingProgramRepository, SqliteTrainingProgramRepository>();
 
         return services;
     }

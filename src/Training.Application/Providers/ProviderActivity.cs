@@ -7,7 +7,7 @@ public sealed record ProviderActivity(
     DateTimeOffset StartedAt,
     TimeSpan Duration,
     string Sport,
-    string Category,
+    string ActivityType,
     double? DistanceMeters,
     int? AverageHeartRate,
     int? RelativeEffort,
