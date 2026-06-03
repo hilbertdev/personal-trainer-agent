@@ -1,3 +1,392 @@
+# Project Vision
+
+Build a training intelligence platform using Onion Architecture.
+
+The purpose of the platform is not to expose Strava data.
+
+The purpose of the platform is to model athletes, training plans, fatigue, recovery, training load and coaching recommendations.
+
+Strava is merely one source of activity data.
+
+The architecture must support future integrations such as:
+
+* Garmin
+* Coros
+* Polar
+* Apple Health
+* Manual workout entry
+* Coach entered workouts
+
+without requiring changes to the core domain.
+
+---
+
+# Solution Structure
+
+```text
+src/
+
+Training.Api
+Training.Application
+Training.Domain
+Training.Infrastructure
+Training.Strava
+```
+
+---
+
+# Responsibilities
+
+## Training.Domain
+
+Contains only core business concepts.
+
+Domain must never reference:
+
+* Strava
+* EF Core
+* HttpClient
+* AWS
+* OpenAI
+* Telegram
+* OpenClaw
+
+Domain represents training concepts only.
+
+Examples:
+
+```text
+Athlete
+TrainingProgram
+Workout
+WorkoutCategory
+TrainingLoad
+Fatigue
+RecoveryStatus
+Recommendation
+Mesocycle
+Microcycle
+TrainingBlock
+```
+
+Domain contains:
+
+* Entities
+* Value Objects
+* Enums
+* Domain Services
+* Domain Events
+
+No infrastructure concerns.
+
+---
+
+## Training.Application
+
+Contains use cases.
+
+Examples:
+
+```text
+GetTodaysWorkout
+RecordAthleteFeedback
+GenerateDailyInsights
+GenerateMesocycleInsights
+GetFatigueStatus
+GetAthleteDashboard
+```
+
+Application orchestrates:
+
+* Domain
+* Repositories
+* External providers
+
+Application never calls HttpClient directly.
+
+Application communicates only through interfaces.
+
+Examples:
+
+```csharp
+IActivityProvider
+IAthleteProvider
+IRecommendationEngine
+ITrainingLoadCalculator
+```
+
+Application contains:
+
+* Commands
+* Queries
+* Handlers
+* Validators
+* Application Services
+
+No Strava-specific logic.
+
+---
+
+## Training.Infrastructure
+
+Contains infrastructure concerns.
+
+Examples:
+
+```text
+EF Core
+Postgres
+Redis
+AWS Secrets Manager
+Repositories
+Caching
+Background Jobs
+```
+
+Infrastructure implements interfaces defined in Application.
+
+Examples:
+
+```csharp
+IAthleteRepository
+IWorkoutRepository
+IRecommendationRepository
+```
+
+Infrastructure never contains business logic.
+
+---
+
+## Training.Strava
+
+Dedicated Strava integration project.
+
+Purpose:
+
+Translate Strava concepts into platform concepts.
+
+Contains:
+
+```text
+Http Clients
+OAuth Flows
+Token Refresh
+Request Models
+Response Models
+Provider Implementations
+```
+
+Examples:
+
+```csharp
+StravaClient
+StravaOAuthService
+StravaTokenService
+StravaActivityProvider
+StravaAthleteProvider
+```
+
+The Strava project exposes abstractions used by Application.
+
+Example:
+
+```csharp
+public class StravaActivityProvider : IActivityProvider
+{
+}
+```
+
+The rest of the solution should not know that Strava exists.
+
+---
+
+## Training.Api
+
+API layer only.
+
+Responsibilities:
+
+* Authentication
+* Authorization
+* Controllers
+* Agent endpoints
+* DTO mapping
+
+No business logic.
+
+Controllers should be thin.
+
+Example:
+
+```text
+POST /api/agent/daily
+POST /api/agent/mesocycle
+GET /api/athletes/{id}/dashboard
+GET /api/athletes/{id}/fatigue
+```
+
+---
+
+# Agent Architecture
+
+Agents are first-class citizens.
+
+Agents are consumers of application use cases.
+
+Agents never talk directly to Strava.
+
+Agents never access repositories directly.
+
+Agents communicate through Application.
+
+---
+
+## Daily Agent
+
+Purpose:
+
+Monitor athlete day-to-day.
+
+Responsibilities:
+
+* Fetch daily activities
+* Categorise workouts
+* Capture athlete feedback
+* Track fatigue markers
+* Track recovery markers
+* Store observations
+* Produce daily recommendations
+
+Inputs:
+
+```text
+Strava activities
+Athlete feedback
+Historical training data
+```
+
+Outputs:
+
+```text
+Workout classification
+Daily load
+Recovery status
+Daily recommendation
+```
+
+Examples:
+
+```text
+Easy Run
+Recovery Run
+Tempo Run
+Intervals
+Long Run
+Strength Session
+Rest Day
+```
+
+---
+
+## Mesocycle Agent
+
+Purpose:
+
+Analyse medium-term trends.
+
+Runs every 3 weeks.
+
+Responsibilities:
+
+* Aggregate daily agent observations
+* Analyse trends
+* Detect overtraining
+* Detect undertraining
+* Recommend recovery periods
+* Recommend progression
+* Recommend plan modifications
+
+Inputs:
+
+```text
+Daily observations
+Training load trends
+Fatigue trends
+Recovery trends
+```
+
+Outputs:
+
+```text
+Increase volume
+Reduce volume
+Recovery week
+Maintain plan
+Adjust intensity
+```
+
+---
+
+# Data Flow
+
+```text
+Strava
+    ↓
+Training.Strava
+    ↓
+IActivityProvider
+    ↓
+Application
+    ↓
+Domain
+    ↓
+Repositories
+    ↓
+Database
+```
+
+Agents consume data through Application services.
+
+Never bypass the flow.
+
+---
+
+# OpenClaw Integration
+
+OpenClaw is an external client.
+
+OpenClaw must not contain business logic.
+
+Example:
+
+User sends Telegram message:
+
+"What is today's workout?"
+
+Flow:
+
+```text
+Telegram
+    ↓
+OpenClaw
+    ↓
+Training.Api
+    ↓
+Daily Agent
+    ↓
+Application
+    ↓
+Domain
+    ↓
+Response
+```
+
+OpenClaw is a consumer.
+
+The intelligence remains inside this platform.
+
+---
+
 # Architectural Rules
 
 These rules are mandatory.
@@ -37,3 +426,34 @@ These rules are mandatory.
 17. Strava must be replaceable without modifying Domain.
 
 18. Future providers must implement the same contracts.
+
+---
+
+# Future Roadmap
+
+Phase 1
+
+* Strava integration
+* Athlete model
+* Workout ingestion
+* Daily agent
+
+Phase 2
+
+* Fatigue modelling
+* Recovery modelling
+* Mesocycle agent
+
+Phase 3
+
+* AI coaching recommendations
+* Adaptive training plans
+* Injury risk prediction
+
+Phase 4
+
+* Garmin integration
+* Coros integration
+* Apple Health integration
+
+The architecture must be designed today to support all future phases without major refactoring.
