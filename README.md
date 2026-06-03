@@ -3,25 +3,27 @@ This is a project that will manage all my training and give recommendations dail
 
 ## Phase 1 beta
 
-This beta keeps the existing Clean Architecture backend and adds only the launch surface needed to validate demand quickly:
+This beta uses Onion Architecture so the platform models training concepts while external data providers stay replaceable:
 
-- `WorkoutPlanner.Domain` remains pure domain entities, enums, and interfaces.
-- `WorkoutPlanner.Application` keeps fatigue analysis, recovery heuristics, hypertrophy projections, and planning rules.
-- `WorkoutPlanner.Infrastructure` provides lightweight SQLite persistence.
-- `WorkoutPlanner.Api` is the ASP.NET Core Minimal API composition root.
+- `Training.Domain` remains pure training domain entities, value objects, and enums.
+- `Training.Application` keeps use cases, provider contracts, fatigue analysis, recovery heuristics, hypertrophy projections, and planning rules.
+- `Training.Infrastructure` provides lightweight SQLite persistence behind Application contracts.
+- `Training.Strava` translates Strava HTTP/OAuth concepts into provider-neutral Application models.
+- `Training.Api` exposes thin API and agent endpoints.
 - `frontend/` is a static-friendly Vite + React TypeScript app for Vercel.
 
-The app defaults to SQLite at `App_Data/workoutplanner.db`, so beta hosting can start near $0/month without a managed database.
+The app defaults to SQLite at `App_Data/training.db`, so beta hosting can start near $0/month without a managed database.
 
 ## Recommended folder structure
 
 ```text
 src/
-  WorkoutPlanner.Domain/          # Pure entities, enums, interfaces
-  WorkoutPlanner.Application/     # FatigueAnalyzer, HypertrophyPhaseScheduler, WorkoutPlanningService
-  WorkoutPlanner.Infrastructure/  # SQLite repositories and sample data
-  WorkoutPlanner.Api/             # Minimal API, CORS, Swagger, health checks
-  WorkoutPlanner.Console/         # CLI entry point using the same services
+  Training.Domain/          # Pure training entities and enums
+  Training.Application/     # Use cases, ports, providers, fatigue/recovery planning
+  Training.Infrastructure/  # SQLite repositories and infrastructure modules
+  Training.Strava/          # Strava HTTP/OAuth integration and provider adapters
+  Training.Api/             # Minimal API, CORS, Swagger, health checks
+  Training.Console/         # CLI entry point using the same services
 frontend/                         # Vite + React + TypeScript + Tailwind + shadcn-style UI
 Dockerfile.api                    # Backend container
 docker-compose.yml                # Local API + SQLite volume
@@ -46,7 +48,7 @@ dotnet build
 Run the API:
 
 ```bash
-dotnet run --project src/WorkoutPlanner.Api
+dotnet run --project src/Training.Api
 ```
 
 Run the frontend:
@@ -90,7 +92,7 @@ Run the console planner against the same SQLite volume:
 docker compose run --rm --build console
 ```
 
-The compose file creates a `workoutplanner-sqlite-data` volume so workout and progress rows survive container restarts.
+The compose file creates a `training-sqlite-data` volume so workout and progress rows survive container restarts.
 
 ## Frontend features
 
@@ -118,7 +120,7 @@ This avoids Kubernetes, managed Postgres, auth providers, and paid infrastructur
 ```bash
 fly auth login
 fly apps create personal-trainer-agent-api
-fly volumes create workoutplanner_data --size 1 --region iad
+fly volumes create training_data --size 1 --region iad
 fly secrets set CORS_ALLOWED_ORIGINS=https://your-vercel-app.vercel.app
 fly deploy
 fly status

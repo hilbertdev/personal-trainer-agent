@@ -7,10 +7,10 @@ primary_region = "iad"
 [env]
   ASPNETCORE_ENVIRONMENT = "Production"
   ASPNETCORE_URLS = "http://+:8080"
-  ConnectionStrings__WorkoutPlannerSqlite = "Data Source=/data/workoutplanner.db"
+  ConnectionStrings__TrainingSqlite = "Data Source=/data/training.db"
 
 [[mounts]]
-  source = "workoutplanner_data"
+  source = "training_data"
   destination = "/data"
 
 [http_service]
