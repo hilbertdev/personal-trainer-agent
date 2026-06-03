@@ -1,1 +1,39 @@
+# Architectural Rules
 
+These rules are mandatory.
+
+1. Domain references nothing.
+
+2. Application references Domain only.
+
+3. Infrastructure references Application and Domain.
+
+4. Strava references Application contracts only.
+
+5. Api references Application only.
+
+6. No project may reference Api.
+
+7. No project may reference Infrastructure abstractions directly.
+
+8. No Strava types may leave the Strava project.
+
+9. No Strava DTOs may enter Domain.
+
+10. No HttpClient usage outside Training.Strava.
+
+11. No EF Core usage outside Training.Infrastructure.
+
+12. Controllers must contain zero business logic.
+
+13. All business decisions belong in Domain or Application.
+
+14. Agents must communicate through Application use cases.
+
+15. Every feature must start with a Domain model before implementation.
+
+16. The platform must remain provider-agnostic.
+
+17. Strava must be replaceable without modifying Domain.
+
+18. Future providers must implement the same contracts.
