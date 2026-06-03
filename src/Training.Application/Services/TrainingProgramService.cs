@@ -154,6 +154,7 @@ public sealed class TrainingProgramService(
             command.Duration,
             totalVolume,
             command.Notes,
+            ProviderName: null,
             ProviderActivityId: null);
 
         var saved = await trainingProgramRepository.SaveWorkoutExecutionAsync(execution, cancellationToken);
@@ -252,10 +253,11 @@ public sealed class TrainingProgramService(
                 date,
                 template?.Id,
                 [],
-                WorkoutExecutionSource.Strava,
+                WorkoutExecutionSource.Imported,
                 activity.Duration,
                 load,
                 BuildStravaExecutionNotes(activity.Sport, activity.Notes),
+                activity.ProviderName,
                 activity.ProviderActivityId);
 
             var saved = await trainingProgramRepository.SaveWorkoutExecutionAsync(execution, cancellationToken);

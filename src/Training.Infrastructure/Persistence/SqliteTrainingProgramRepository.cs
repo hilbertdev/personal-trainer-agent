@@ -1,5 +1,6 @@
 using System.Data;
 using System.Globalization;
+using System.Text;
 using Dapper;
 using Training.Application.Abstractions;
 using Training.Domain.Entities;
@@ -231,13 +232,10 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
         await EnsureSchemaAsync(cancellationToken);
 
         await using var connection = connectionFactory.CreateConnection();
-        var row = await connection.QuerySingleOrDefaultAsync<WorkoutTemplateLookupRow>(
+        var id = await connection.QuerySingleOrDefaultAsync<string>(
             new CommandDefinition(
                 """
-                SELECT
-                    wt.id AS Id,
-                    wp.week_number AS WeekNumber,
-                    m.start_date AS MesocycleStartDate
+                SELECT wt.id
                 FROM workout_templates wt
                 INNER JOIN weekly_plans wp ON wp.id = wt.weekly_plan_id
                 INNER JOIN mesocycles m ON m.id = wp.mesocycle_id
@@ -248,7 +246,16 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                   AND m.start_date <= @WorkoutDate
                   AND date(m.start_date, printf('+%d days', (m.duration_weeks * 7) - 1)) >= @WorkoutDate
                   AND wt.day_of_week = @DayOfWeek
-                ORDER BY p.start_date DESC, m.start_date DESC, wp.week_number ASC;
+                ORDER BY
+                    p.start_date DESC,
+                    m.start_date DESC,
+                    CASE
+                        WHEN wp.week_number = CAST(((julianday(@WorkoutDate) - julianday(m.start_date)) / 7) AS INTEGER) + 1 THEN 0
+                        WHEN wp.week_number = 1 THEN 1
+                        ELSE 2
+                    END,
+                    wp.week_number
+                LIMIT 1;
                 """,
                 new
                 {
@@ -258,19 +265,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 },
                 cancellationToken: cancellationToken));
 
-        if (row is null)
-        {
-            return null;
-        }
-
-        var weekNumber = ((date.DayNumber - ParseDate(row.MesocycleStartDate).DayNumber) / 7) + 1;
-        var templateId = row.WeekNumber == weekNumber
-            ? Guid.Parse(row.Id)
-            : await FindFallbackWorkoutTemplateIdAsync(connection, athleteId, date, weekNumber, cancellationToken);
-
-        return templateId is null
+        return string.IsNullOrWhiteSpace(id)
             ? null
-            : await LoadWorkoutTemplateAsync(connection, templateId.Value, cancellationToken);
+            : await LoadWorkoutTemplateAsync(connection, Guid.Parse(id), cancellationToken);
     }
 
     public async Task<IReadOnlyList<ExerciseSubstitution>> GetExerciseSubstitutionsAsync(
@@ -415,6 +412,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                     duration_seconds,
                     total_volume,
                     notes,
+                    provider_name,
                     provider_activity_id)
                 VALUES (
                     @Id,
@@ -425,6 +423,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                     @DurationSeconds,
                     @TotalVolume,
                     @Notes,
+                    @ProviderName,
                     @ProviderActivityId)
                 ON CONFLICT(provider_activity_id) DO UPDATE SET
                     athlete_id = excluded.athlete_id,
@@ -433,7 +432,8 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                     source = excluded.source,
                     duration_seconds = excluded.duration_seconds,
                     total_volume = excluded.total_volume,
-                    notes = excluded.notes
+                    notes = excluded.notes,
+                    provider_name = excluded.provider_name
                 RETURNING id;
                 """,
                 new
@@ -444,8 +444,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                     WorkoutTemplateId = execution.WorkoutTemplateId?.ToString(),
                     Source = execution.Source.ToString(),
                     DurationSeconds = (long)execution.Duration.TotalSeconds,
-                    execution.TotalVolume,
+                    TotalVolume = FormatDecimal(execution.TotalVolume),
                     execution.Notes,
+                    execution.ProviderName,
                     execution.ProviderActivityId
                 },
                 transaction,
@@ -498,7 +499,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                         exercise.ExerciseName,
                         exercise.SetsPerformed,
                         exercise.RepsPerformed,
-                        exercise.WeightUsed,
+                        WeightUsed = FormatDecimal(exercise.WeightUsed),
                         SubstitutionId = exercise.SubstitutionId?.ToString(),
                         exercise.SubstitutionReason
                     },
@@ -529,7 +530,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 {
                     AthleteId = summary.AthleteId.ToString(),
                     LoadDate = FormatDate(summary.Date),
-                    LoadValue = summary.Load
+                    LoadValue = FormatDecimal(summary.Load)
                 },
                 cancellationToken: cancellationToken));
     }
@@ -617,8 +618,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                         workout_template_id TEXT NULL REFERENCES workout_templates(id) ON DELETE SET NULL,
                         source TEXT NOT NULL,
                         duration_seconds INTEGER NOT NULL,
-                        total_volume NUMERIC NOT NULL,
+                        total_volume TEXT NOT NULL,
                         notes TEXT NULL,
+                        provider_name TEXT NULL,
                         provider_activity_id TEXT NULL UNIQUE
                     );
 
@@ -630,7 +632,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                         exercise_name TEXT NOT NULL,
                         sets_performed INTEGER NOT NULL,
                         reps_performed INTEGER NOT NULL,
-                        weight_used NUMERIC NOT NULL,
+                        weight_used TEXT NOT NULL,
                         substitution_id TEXT NULL REFERENCES exercise_substitutions(id) ON DELETE SET NULL,
                         substitution_reason TEXT NULL
                     );
@@ -638,7 +640,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                     CREATE TABLE IF NOT EXISTS training_load_summaries (
                         athlete_id TEXT NOT NULL,
                         load_date TEXT NOT NULL,
-                        load_value NUMERIC NOT NULL,
+                        load_value TEXT NOT NULL,
                         PRIMARY KEY (athlete_id, load_date)
                     );
 
@@ -998,8 +1000,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                     workout_template_id AS WorkoutTemplateId,
                     source AS Source,
                     duration_seconds AS DurationSeconds,
-                    total_volume AS TotalVolume,
+                    CAST(total_volume AS TEXT) AS TotalVolume,
                     notes AS Notes,
+                    provider_name AS ProviderName,
                     provider_activity_id AS ProviderActivityId
                 FROM workout_executions
                 WHERE athlete_id = @AthleteId
@@ -1028,8 +1031,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 exercises,
                 Enum.Parse<WorkoutExecutionSource>(row.Source),
                 TimeSpan.FromSeconds(row.DurationSeconds),
-                row.TotalVolume,
+                ParseDecimal(row.TotalVolume),
                 row.Notes,
+                row.ProviderName,
                 row.ProviderActivityId));
         }
 
@@ -1041,7 +1045,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
         Guid workoutExecutionId,
         CancellationToken cancellationToken)
     {
-        var rows = await connection.QueryAsync<ExerciseExecutionRow>(
+        var rows = await connection.QueryAsync(
             new CommandDefinition(
                 """
                 SELECT
@@ -1050,7 +1054,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                     exercise_name AS ExerciseName,
                     sets_performed AS SetsPerformed,
                     reps_performed AS RepsPerformed,
-                    weight_used AS WeightUsed,
+                    CAST(weight_used AS TEXT) AS WeightUsed,
                     substitution_id AS SubstitutionId,
                     substitution_reason AS SubstitutionReason
                 FROM exercise_executions
@@ -1062,14 +1066,14 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
 
         return rows
             .Select(row => new ExerciseExecution(
-                Guid.Parse(row.Id),
-                string.IsNullOrWhiteSpace(row.OriginalExerciseTemplateId) ? null : Guid.Parse(row.OriginalExerciseTemplateId),
-                row.ExerciseName,
-                (int)row.SetsPerformed,
-                (int)row.RepsPerformed,
-                row.WeightUsed,
-                string.IsNullOrWhiteSpace(row.SubstitutionId) ? null : Guid.Parse(row.SubstitutionId),
-                row.SubstitutionReason))
+                Guid.Parse((string)row.Id),
+                string.IsNullOrWhiteSpace((string?)row.OriginalExerciseTemplateId) ? (Guid?)null : Guid.Parse((string)row.OriginalExerciseTemplateId),
+                (string)row.ExerciseName,
+                Convert.ToInt32(row.SetsPerformed, CultureInfo.InvariantCulture),
+                Convert.ToInt32(row.RepsPerformed, CultureInfo.InvariantCulture),
+                ToDecimalValue(row.WeightUsed),
+                string.IsNullOrWhiteSpace((string?)row.SubstitutionId) ? (Guid?)null : Guid.Parse((string)row.SubstitutionId),
+                (string?)row.SubstitutionReason))
             .ToList();
     }
 
@@ -1086,7 +1090,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 SELECT
                     athlete_id AS AthleteId,
                     load_date AS LoadDate,
-                    load_value AS LoadValue
+                    CAST(load_value AS TEXT) AS LoadValue
                 FROM training_load_summaries
                 WHERE athlete_id = @AthleteId
                   AND load_date >= @StartDate
@@ -1102,7 +1106,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 cancellationToken: cancellationToken));
 
         return rows
-            .Select(row => new TrainingLoadSummary(Guid.Parse(row.AthleteId), ParseDate(row.LoadDate), row.LoadValue))
+            .Select(row => new TrainingLoadSummary(Guid.Parse(row.AthleteId), ParseDate(row.LoadDate), ParseDecimal(row.LoadValue)))
             .ToList();
     }
 
@@ -1140,6 +1144,31 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
     private static DateOnly ParseDate(string date)
     {
         return DateOnly.ParseExact(date, DateFormat, CultureInfo.InvariantCulture);
+    }
+
+    private static decimal ParseDecimal(string value)
+    {
+        return decimal.Parse(value, NumberStyles.Number, CultureInfo.InvariantCulture);
+    }
+
+    private static decimal ToDecimalValue(object value)
+    {
+        return value switch
+        {
+            decimal decimalValue => decimalValue,
+            double doubleValue => (decimal)doubleValue,
+            float floatValue => (decimal)floatValue,
+            long longValue => longValue,
+            int intValue => intValue,
+            string stringValue => ParseDecimal(stringValue),
+            byte[] bytes => ParseDecimal(Encoding.UTF8.GetString(bytes)),
+            _ => Convert.ToDecimal(value, CultureInfo.InvariantCulture)
+        };
+    }
+
+    private static string FormatDecimal(decimal value)
+    {
+        return value.ToString(CultureInfo.InvariantCulture);
     }
 
     private sealed record TrainingProgramRow(
@@ -1196,22 +1225,13 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
         string? WorkoutTemplateId,
         string Source,
         long DurationSeconds,
-        decimal TotalVolume,
+        string TotalVolume,
         string? Notes,
+        string? ProviderName,
         string? ProviderActivityId);
-
-    private sealed record ExerciseExecutionRow(
-        string Id,
-        string? OriginalExerciseTemplateId,
-        string ExerciseName,
-        long SetsPerformed,
-        long RepsPerformed,
-        decimal WeightUsed,
-        string? SubstitutionId,
-        string? SubstitutionReason);
 
     private sealed record TrainingLoadSummaryRow(
         string AthleteId,
         string LoadDate,
-        decimal LoadValue);
+        string LoadValue);
 }

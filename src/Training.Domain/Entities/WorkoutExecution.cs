@@ -12,4 +12,5 @@ public sealed record WorkoutExecution(
     TimeSpan Duration,
     decimal TotalVolume,
     string? Notes,
+    string? ProviderName,
     string? ProviderActivityId);

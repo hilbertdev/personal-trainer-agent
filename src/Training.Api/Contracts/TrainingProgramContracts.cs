@@ -108,7 +108,7 @@ public sealed record WorkoutExecutionResponse(
     Guid AthleteId,
     DateOnly Date,
     Guid? WorkoutTemplateId,
-    WorkoutExecutionSource Source,
+    string Source,
     int DurationMinutes,
     decimal TotalVolume,
     string? Notes,
@@ -278,7 +278,9 @@ public static class TrainingProgramContractMapper
             execution.AthleteId,
             execution.Date,
             execution.WorkoutTemplateId,
-            execution.Source,
+            execution.Source is WorkoutExecutionSource.Manual
+                ? WorkoutExecutionSource.Manual.ToString()
+                : execution.ProviderName ?? execution.Source.ToString(),
             (int)Math.Round(execution.Duration.TotalMinutes),
             execution.TotalVolume,
             execution.Notes,
