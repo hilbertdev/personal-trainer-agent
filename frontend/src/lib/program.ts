@@ -46,7 +46,27 @@ export interface LoggedExercise {
   weight: number;
   rpe: number;
   muscleGroups: string[];
+  originalName?: string;
+  warmupSets?: string;
+  earlySetRpe?: string;
+  lastSetRpe?: string;
+  restTime?: string;
+  lastSetIntensityTechnique?: string;
+  notes?: string;
+  substitutionReason?: string;
+  substitutions?: ExerciseSubstitutionOption[];
 }
+
+export type ExerciseSubstitutionSource = "template" | "custom";
+
+export interface ExerciseSubstitutionOption {
+  name: string;
+  source: ExerciseSubstitutionSource;
+  reason?: string;
+  frequencyUsed?: number;
+}
+
+export type SubstitutionMemory = Record<string, ExerciseSubstitutionOption[]>;
 
 export interface HeartRateData {
   avg: number;
@@ -70,6 +90,9 @@ export interface LoggedWorkout {
   workoutType: string; // split slot, e.g. "Push" | "Pull" | "Legs" | "Upper" | "Lower"
   exercises: LoggedExercise[];
   loggedAt: string;
+  templateName?: string;
+  templateDescription?: string;
+  templateWeek?: string;
 
   // Optional physiological inputs captured manually alongside the lifting data.
   heartRate?: HeartRateData;
@@ -135,6 +158,7 @@ export interface Program {
   progression: ProgressionSettings;
   status: ProgramStatus;
   baselineWeek: BaselineWeek;
+  substitutionMemory: SubstitutionMemory;
   mesocycle: Mesocycle | null;
   createdAt: string;
 }
@@ -193,6 +217,146 @@ export const RPE_PROGRESSION_OPTIONS: { label: string; value: number }[] = [
   { label: "None", value: 0 },
   { label: "+0.5 Weekly", value: 0.5 },
   { label: "+1 Weekly", value: 1 },
+];
+
+export const UPPER_1_TEMPLATE_NAME = "Upper #1 - Jeff Nippard Pure Bodybuilding";
+export const UPPER_1_TEMPLATE_WEEK = "Week 1 (Baseline Template)";
+export const UPPER_1_TEMPLATE_DESCRIPTION =
+  "A hypertrophy-focused upper body workout emphasizing lateral delts, lats, chest, triceps, and upper back. This workout includes exercise-specific intensity techniques, RPE targets, rep ranges, rest periods, coaching cues, and recommended substitutions.";
+
+const templateSubstitutions = (names: string[]): ExerciseSubstitutionOption[] =>
+  names.map((name) => ({ name, source: "template" }));
+
+const DEFAULT_UPPER_1_EXERCISES: LoggedExercise[] = [
+  {
+    name: "Cuffed Behind-The-Back Lateral Raise",
+    originalName: "Cuffed Behind-The-Back Lateral Raise",
+    warmupSets: "1-2",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Myo-reps",
+    notes:
+      "Raise the cables up and out in a Y motion. Focus on connecting with the middle delt fibres as you sweep the weight upward and outward.",
+    substitutions: templateSubstitutions(["Cross-Body Cable Y-Raise", "DB Lateral Raise"]),
+    muscleGroups: ["Shoulders"],
+  },
+  {
+    name: "Cross-Body Lat Pull-Around",
+    originalName: "Cross-Body Lat Pull-Around",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "10",
+    restTime: "2-3 minutes",
+    lastSetIntensityTechnique: "Long-length partials on all reps of the last set.",
+    notes:
+      "Keep the cable and wrist aligned in a straight line throughout the pull. Focus on a deep lat stretch at the top.",
+    substitutions: templateSubstitutions(["Half-Kneeling 1-Arm Lat Pulldown", "Neutral-Grip Pullup"]),
+    muscleGroups: ["Back"],
+  },
+  {
+    name: "Low Incline Smith Machine Press",
+    originalName: "Low Incline Smith Machine Press",
+    warmupSets: "2-3",
+    sets: 4,
+    repRangeMin: 8,
+    repRangeMax: 10,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "8-9",
+    lastSetRpe: "9-10",
+    restTime: "2-3 minutes",
+    lastSetIntensityTechnique: "Pec Static Stretch (30 second hold)",
+    notes:
+      "Set the bench to approximately 15 degrees. Pause on the chest for one second each rep while maintaining tension on the pecs.",
+    substitutions: templateSubstitutions(["Low Incline Machine Press", "Low Incline DB Press"]),
+    muscleGroups: ["Chest", "Shoulders", "Triceps"],
+  },
+  {
+    name: "Chest-Supported Machine Row",
+    originalName: "Chest-Supported Machine Row",
+    warmupSets: "1-2",
+    sets: 3,
+    repRangeMin: 8,
+    repRangeMax: 10,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "10",
+    restTime: "2-3 minutes",
+    lastSetIntensityTechnique: "Long-length partials on all reps of the last set.",
+    notes:
+      "Flare elbows to roughly 45 degrees and squeeze shoulder blades together at the top of each repetition.",
+    substitutions: templateSubstitutions(["Chest-Supported T-Bar Row", "Helms Row"]),
+    muscleGroups: ["Back"],
+  },
+  {
+    name: "Overhead Cable Triceps Extension (Bar)",
+    originalName: "Overhead Cable Triceps Extension (Bar)",
+    warmupSets: "1",
+    sets: 2,
+    repRangeMin: 8,
+    repRangeMax: 10,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "2-3 minutes",
+    lastSetIntensityTechnique: "Dropset",
+    notes:
+      "Focus on achieving a deep triceps stretch throughout the negative. Pause for one second in the stretched position.",
+    substitutions: templateSubstitutions(["Overhead Cable Triceps Extension (Rope)", "DB Skull Crusher"]),
+    muscleGroups: ["Triceps"],
+  },
+  {
+    name: "Straight-Bar Lat Prayer",
+    originalName: "Straight-Bar Lat Prayer",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 12,
+    repRangeMax: 15,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Long-length partials on all reps of the last set.",
+    notes:
+      "Lean forward to maximize the lat stretch at the top of the movement and stand upright while squeezing the lats at the bottom.",
+    substitutions: templateSubstitutions(["Machine Lat Pullover", "DB Lat Pullover"]),
+    muscleGroups: ["Back"],
+  },
+  {
+    name: "Pec Deck (with Integrated Partials)",
+    originalName: "Pec Deck (with Integrated Partials)",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 12,
+    repRangeMax: 15,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "8-9",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Integrated Partials on all sets",
+    notes:
+      "Configure the pec deck for maximum stretch. Perform alternating full-ROM and half-ROM repetitions: 1 full ROM, 1 half ROM in the stretched position. Repeat until target reps are achieved while maintaining an RPE of 9-10.",
+    substitutions: templateSubstitutions([
+      "Bent-Over Cable Pec Flye (with Integrated Partials)",
+      "DB Flye (with Integrated Partials)",
+    ]),
+    muscleGroups: ["Chest"],
+  },
 ];
 
 export function getSplitDefinition(splitType: SplitType): SplitDefinition {
@@ -287,9 +451,117 @@ export function createProgram(input: {
     baselineWeek: {
       loggedWorkouts: [],
     },
+    substitutionMemory: {},
     mesocycle: null,
     createdAt: new Date().toISOString(),
   };
+}
+
+function normalizeExerciseName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function cloneSubstitution(option: ExerciseSubstitutionOption): ExerciseSubstitutionOption {
+  return { ...option };
+}
+
+function cloneExercise(exercise: LoggedExercise): LoggedExercise {
+  return {
+    ...exercise,
+    muscleGroups: [...exercise.muscleGroups],
+    substitutions: exercise.substitutions?.map(cloneSubstitution),
+  };
+}
+
+function mergeSubstitutionOptions(
+  templateOptions: ExerciseSubstitutionOption[] | undefined,
+  memoryOptions: ExerciseSubstitutionOption[] | undefined,
+): ExerciseSubstitutionOption[] {
+  const options = new Map<string, ExerciseSubstitutionOption>();
+
+  for (const option of [...(templateOptions ?? []), ...(memoryOptions ?? [])]) {
+    const key = normalizeExerciseName(option.name);
+    if (!key) {
+      continue;
+    }
+    const existing = options.get(key);
+    options.set(key, {
+      ...option,
+      frequencyUsed: Math.max(existing?.frequencyUsed ?? 0, option.frequencyUsed ?? 0) || undefined,
+      source: existing?.source === "template" ? "template" : option.source,
+    });
+  }
+
+  return [...options.values()];
+}
+
+function applySubstitutionMemory(
+  exercise: LoggedExercise,
+  substitutionMemory: SubstitutionMemory,
+): LoggedExercise {
+  const originalName = exercise.originalName ?? exercise.name;
+  const memoryOptions = substitutionMemory[normalizeExerciseName(originalName)];
+
+  return {
+    ...cloneExercise(exercise),
+    originalName,
+    substitutions: mergeSubstitutionOptions(exercise.substitutions, memoryOptions),
+  };
+}
+
+export function rememberWorkoutSubstitutions(
+  substitutionMemory: SubstitutionMemory,
+  workout: LoggedWorkout,
+): SubstitutionMemory {
+  const next: SubstitutionMemory = Object.fromEntries(
+    Object.entries(substitutionMemory).map(([key, options]) => [key, options.map(cloneSubstitution)]),
+  );
+
+  for (const exercise of workout.exercises) {
+    const originalName = exercise.originalName?.trim();
+    const substitutedName = exercise.name.trim();
+
+    if (!originalName || normalizeExerciseName(originalName) === normalizeExerciseName(substitutedName)) {
+      continue;
+    }
+
+    const predefined = exercise.substitutions?.some(
+      (option) =>
+        option.source === "template" &&
+        normalizeExerciseName(option.name) === normalizeExerciseName(substitutedName),
+    );
+
+    if (predefined) {
+      continue;
+    }
+
+    const key = normalizeExerciseName(originalName);
+    const currentOptions = next[key] ?? [];
+    const existingIndex = currentOptions.findIndex(
+      (option) => normalizeExerciseName(option.name) === normalizeExerciseName(substitutedName),
+    );
+    const learnedOption: ExerciseSubstitutionOption = {
+      name: substitutedName,
+      source: "custom",
+      reason: exercise.substitutionReason,
+      frequencyUsed: 1,
+    };
+
+    if (existingIndex >= 0) {
+      const existing = currentOptions[existingIndex];
+      currentOptions[existingIndex] = {
+        ...existing,
+        reason: exercise.substitutionReason ?? existing.reason,
+        frequencyUsed: (existing.frequencyUsed ?? 0) + 1,
+      };
+      next[key] = currentOptions;
+      continue;
+    }
+
+    next[key] = [...currentOptions, learnedOption];
+  }
+
+  return next;
 }
 
 const parseRepRange = (reps: string): { min: number; max: number } => {
@@ -327,6 +599,7 @@ export function createEmptyLoggedExercise(): LoggedExercise {
     weight: 0,
     rpe: 7,
     muscleGroups: [],
+    substitutions: [],
   };
 }
 
@@ -339,7 +612,24 @@ export function createEmptyLoggedExercise(): LoggedExercise {
 export function buildQuickFillWorkout(
   dayOfWeek: DayOfWeek,
   workoutType: string,
+  substitutionMemory: SubstitutionMemory = {},
 ): LoggedWorkout {
+  if (workoutType === "Upper") {
+    return {
+      id: createId("workout"),
+      dayOfWeek,
+      workoutType,
+      templateName: UPPER_1_TEMPLATE_NAME,
+      templateDescription: UPPER_1_TEMPLATE_DESCRIPTION,
+      templateWeek: UPPER_1_TEMPLATE_WEEK,
+      exercises: DEFAULT_UPPER_1_EXERCISES.map((exercise) =>
+        applySubstitutionMemory(exercise, substitutionMemory),
+      ),
+      loggedAt: new Date().toISOString(),
+      sessionType: workoutType,
+    };
+  }
+
   const sampleByType: Record<string, string[]> = {
     Push: ["Push"],
     Pull: ["Pull"],
@@ -360,12 +650,14 @@ export function buildQuickFillWorkout(
       const range = parseRepRange(exercise.reps);
       exercises.push({
         name: exercise.name,
+        originalName: exercise.name,
         sets: exercise.sets,
         repRangeMin: range.min,
         repRangeMax: range.max,
         weight: 0,
         rpe: parseRpe(exercise.rirOrRpe),
         muscleGroups: [...exercise.muscleGroups],
+        substitutions: substitutionMemory[normalizeExerciseName(exercise.name)]?.map(cloneSubstitution) ?? [],
       });
     }
   }
@@ -376,6 +668,7 @@ export function buildQuickFillWorkout(
     workoutType,
     exercises,
     loggedAt: new Date().toISOString(),
+    sessionType: workoutType,
   };
 }
 
@@ -394,10 +687,7 @@ export function enrichWorkout(workout: LoggedWorkout, activity: StravaActivity):
 
   return {
     ...workout,
-    exercises: workout.exercises.map((exercise) => ({
-      ...exercise,
-      muscleGroups: [...exercise.muscleGroups],
-    })),
+    exercises: workout.exercises.map(cloneExercise),
     heartRate,
     durationMinutes: workout.durationMinutes ?? activity.durationMinutes,
     stravaData: {
@@ -437,6 +727,7 @@ function progressExercise(
     repRangeMax,
     rpe,
     muscleGroups: [...exercise.muscleGroups],
+    substitutions: exercise.substitutions?.map(cloneSubstitution),
   };
 }
 
@@ -481,10 +772,7 @@ export function generateMesocycle(program: Program): Mesocycle {
         ? {
             ...baselineWorkout,
             id: createId("workout"),
-            exercises: baselineWorkout.exercises.map((exercise) => ({
-              ...exercise,
-              muscleGroups: [...exercise.muscleGroups],
-            })),
+            exercises: baselineWorkout.exercises.map(cloneExercise),
           }
         : progressWorkout(baselineWorkout, weekNumber, program.progression, lengthWeeks);
       return { dayOfWeek: cycleDay.dayOfWeek, workoutType: cycleDay.workoutType, workout };

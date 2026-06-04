@@ -9,8 +9,10 @@ import {
   createEmptyLoggedExercise,
   createId,
   type DayOfWeek,
+  type ExerciseSubstitutionOption,
   type LoggedExercise,
   type LoggedWorkout,
+  type SubstitutionMemory,
 } from "@/lib/program";
 
 interface SessionDetails {
@@ -28,6 +30,44 @@ const EMPTY_SESSION_DETAILS: SessionDetails = {
   durationMinutes: null,
   notes: "",
 };
+
+interface SubstitutionDraft {
+  selectedName: string;
+  customName: string;
+  reason: string;
+}
+
+function sameExerciseName(left: string, right: string): boolean {
+  return left.trim().toLowerCase() === right.trim().toLowerCase();
+}
+
+function upsertCustomSubstitution(
+  options: ExerciseSubstitutionOption[] | undefined,
+  customName: string,
+  reason?: string,
+): ExerciseSubstitutionOption[] {
+  const next = [...(options ?? [])];
+  const existingIndex = next.findIndex((option) => sameExerciseName(option.name, customName));
+
+  if (existingIndex >= 0) {
+    next[existingIndex] = {
+      ...next[existingIndex],
+      reason: reason ?? next[existingIndex].reason,
+      frequencyUsed: (next[existingIndex].frequencyUsed ?? 0) + 1,
+    };
+    return next;
+  }
+
+  return [
+    ...next,
+    {
+      name: customName,
+      source: "custom",
+      reason,
+      frequencyUsed: 1,
+    },
+  ];
+}
 
 function sessionDetailsFrom(existing?: LoggedWorkout): SessionDetails {
   if (!existing) {
@@ -49,6 +89,7 @@ export function LogWorkoutModal({
   workoutType,
   existing,
   onSave,
+  substitutionMemory = {},
 }: {
   open: boolean;
   onClose: () => void;
@@ -56,9 +97,12 @@ export function LogWorkoutModal({
   workoutType: string;
   existing?: LoggedWorkout;
   onSave: (workout: LoggedWorkout) => void;
+  substitutionMemory?: SubstitutionMemory;
 }) {
   const [exercises, setExercises] = useState<LoggedExercise[]>([createEmptyLoggedExercise()]);
   const [session, setSession] = useState<SessionDetails>(() => sessionDetailsFrom(existing));
+  const [openSubstitutionIndex, setOpenSubstitutionIndex] = useState<number | null>(null);
+  const [substitutionDrafts, setSubstitutionDrafts] = useState<Record<number, SubstitutionDraft>>({});
 
   // Reset the form whenever a new session is opened.
   useEffect(() => {
@@ -71,6 +115,8 @@ export function LogWorkoutModal({
         : [createEmptyLoggedExercise()],
     );
     setSession(sessionDetailsFrom(existing));
+    setOpenSubstitutionIndex(null);
+    setSubstitutionDrafts({});
   }, [open, existing]);
 
   const updateSession = (patch: Partial<SessionDetails>) => {
@@ -94,7 +140,53 @@ export function LogWorkoutModal({
   };
 
   const quickFill = () => {
-    setExercises(buildQuickFillWorkout(dayOfWeek, workoutType).exercises);
+    const quickFilledWorkout = buildQuickFillWorkout(dayOfWeek, workoutType, substitutionMemory);
+    setExercises(quickFilledWorkout.exercises);
+  };
+
+  const updateSubstitutionDraft = (index: number, patch: Partial<SubstitutionDraft>) => {
+    const emptyDraft: SubstitutionDraft = {
+      selectedName: "",
+      customName: "",
+      reason: "",
+    };
+
+    setSubstitutionDrafts((current) => ({
+      ...current,
+      [index]: { ...emptyDraft, ...current[index], ...patch },
+    }));
+  };
+
+  const applySubstitution = (index: number) => {
+    const draft = substitutionDrafts[index];
+    const customName = draft?.customName.trim() ?? "";
+    const selectedName = draft?.selectedName.trim() ?? "";
+    const chosenName = customName || selectedName;
+
+    if (!chosenName) {
+      return;
+    }
+
+    setExercises((current) =>
+      current.map((exercise, exerciseIndex) => {
+        if (exerciseIndex !== index) {
+          return exercise;
+        }
+
+        const originalName = exercise.originalName ?? exercise.name;
+        const reason = draft?.reason.trim() || undefined;
+        return {
+          ...exercise,
+          name: chosenName,
+          originalName,
+          substitutionReason: reason,
+          substitutions: customName
+            ? upsertCustomSubstitution(exercise.substitutions, customName, reason)
+            : exercise.substitutions,
+        };
+      }),
+    );
+    setOpenSubstitutionIndex(null);
   };
 
   const validExercises = exercises.filter((exercise) => exercise.name.trim().length > 0);
@@ -153,7 +245,8 @@ export function LogWorkoutModal({
     >
       <div className="mb-4 flex justify-end">
         <Button type="button" variant="secondary" size="sm" onClick={quickFill}>
-          <Sparkles className="h-4 w-4" /> Quick-fill from sample
+          <Sparkles className="h-4 w-4" />{" "}
+          {workoutType === "Upper" ? "Quick-fill Upper #1 template" : "Quick-fill from sample"}
         </Button>
       </div>
 
@@ -268,6 +361,132 @@ export function LogWorkoutModal({
                 onChange={(value) => updateExercise(index, { rpe: value })}
               />
             </div>
+
+            {(exercise.warmupSets ||
+              exercise.earlySetRpe ||
+              exercise.lastSetRpe ||
+              exercise.restTime ||
+              exercise.lastSetIntensityTechnique ||
+              exercise.notes) && (
+              <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-600 dark:border-white/10 dark:bg-black/20 dark:text-zinc-300">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {exercise.warmupSets && <PrescriptionItem label="Warmup Sets" value={exercise.warmupSets} />}
+                  {exercise.earlySetRpe && <PrescriptionItem label="Early Set RPE" value={exercise.earlySetRpe} />}
+                  {exercise.lastSetRpe && <PrescriptionItem label="Last Set RPE" value={exercise.lastSetRpe} />}
+                  {exercise.restTime && <PrescriptionItem label="Rest Time" value={exercise.restTime} />}
+                  {exercise.lastSetIntensityTechnique && (
+                    <PrescriptionItem
+                      label="Last Set Intensity Technique"
+                      value={exercise.lastSetIntensityTechnique}
+                    />
+                  )}
+                </div>
+                {exercise.notes && (
+                  <p className="mt-2 leading-relaxed">
+                    <span className="font-semibold text-zinc-700 dark:text-zinc-200">Notes: </span>
+                    {exercise.notes}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="mt-3">
+              {exercise.originalName && !sameExerciseName(exercise.originalName, exercise.name) && (
+                <p className="mb-2 rounded-2xl bg-lime-300/15 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
+                  Substituted for {exercise.originalName}
+                  {exercise.substitutionReason ? ` - ${exercise.substitutionReason}` : ""}
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setOpenSubstitutionIndex(openSubstitutionIndex === index ? null : index)}
+              >
+                Substitute Exercise
+              </Button>
+
+              {openSubstitutionIndex === index && (
+                <div className="mt-3 rounded-2xl border border-lime-300/40 bg-lime-300/10 p-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                    Choose substitution
+                  </p>
+                  {exercise.substitutions && exercise.substitutions.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {exercise.substitutions.map((option) => {
+                        const draft = substitutionDrafts[index];
+                        const selected = draft?.selectedName === option.name && !draft?.customName;
+                        return (
+                          <button
+                            key={`${option.source}-${option.name}`}
+                            type="button"
+                            onClick={() =>
+                              updateSubstitutionDraft(index, {
+                                selectedName: option.name,
+                                customName: "",
+                              })
+                            }
+                            className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                              selected
+                                ? "border-lime-400 bg-lime-300 text-zinc-950"
+                                : "border-zinc-200 bg-white/80 text-zinc-600 hover:border-lime-300 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200"
+                            }`}
+                          >
+                            {option.name}
+                            {option.source === "custom" ? " (saved)" : ""}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      No saved substitutions yet. Add one below.
+                    </p>
+                  )}
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                        Custom substitution
+                      </span>
+                      <input
+                        value={substitutionDrafts[index]?.customName ?? ""}
+                        onChange={(event) =>
+                          updateSubstitutionDraft(index, {
+                            customName: event.target.value,
+                            selectedName: "",
+                          })
+                        }
+                        placeholder="e.g. Hammer Strength Incline Press"
+                        className="mt-1 w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Reason</span>
+                      <input
+                        value={substitutionDrafts[index]?.reason ?? ""}
+                        onChange={(event) => updateSubstitutionDraft(index, { reason: event.target.value })}
+                        placeholder="e.g. Smith machine unavailable"
+                        className="mt-1 w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={
+                        !substitutionDrafts[index]?.selectedName.trim() &&
+                        !substitutionDrafts[index]?.customName.trim()
+                      }
+                      onClick={() => applySubstitution(index)}
+                    >
+                      Save substitution
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -344,5 +563,14 @@ function NumberField({
         className="mt-1 w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
       />
     </label>
+  );
+}
+
+function PrescriptionItem({ label, value }: { label: string; value: string }) {
+  return (
+    <p>
+      <span className="font-semibold text-zinc-700 dark:text-zinc-200">{label}: </span>
+      {value}
+    </p>
   );
 }

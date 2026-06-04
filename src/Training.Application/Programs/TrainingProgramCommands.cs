@@ -21,15 +21,23 @@ public sealed record AddWorkoutTemplateCommand(
     Guid WeeklyPlanId,
     string Name,
     DayOfWeek DayOfWeek,
-    IReadOnlyList<ExerciseTemplateInput> Exercises);
+    IReadOnlyList<ExerciseTemplateInput> Exercises,
+    string? WorkoutType,
+    string? Description);
 
 public sealed record ExerciseTemplateInput(
     string ExerciseName,
+    string? WarmupSets,
     int TargetSets,
     int TargetRepMin,
     int TargetRepMax,
+    string? EarlySetRpe,
+    string? LastSetRpe,
+    string? RestTime,
+    string? LastSetIntensityTechnique,
     string? Notes,
-    ExerciseCategory Category);
+    ExerciseCategory Category,
+    IReadOnlyList<string>? Substitutions);
 
 public sealed record RecordWorkoutExecutionCommand(
     Guid AthleteId,
