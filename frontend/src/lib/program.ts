@@ -1,0 +1,420 @@
+import { mockWorkoutWeek } from "@/mock-data/workouts";
+
+export type SplitType = "PPL" | "UPPER_LOWER";
+
+export type ProgramStatus = "collecting_baseline_week" | "active_mesocycle";
+
+export type DayOfWeek =
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday"
+  | "Sunday";
+
+export const DAYS_OF_WEEK: DayOfWeek[] = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+export interface ProgressionSettings {
+  repProgression: number; // 0 | 1 | 2
+  setProgressionEnabled: boolean;
+  rpeProgression: number; // 0 | 0.5 | 1
+}
+
+export interface WeeklyCycleDay {
+  dayOfWeek: DayOfWeek;
+  workoutType: string | null; // null = rest day
+}
+
+export interface WeeklyCycle {
+  days: WeeklyCycleDay[]; // length 7, Monday..Sunday
+}
+
+export interface LoggedExercise {
+  name: string;
+  sets: number;
+  repRangeMin: number;
+  repRangeMax: number;
+  weight: number;
+  rpe: number;
+  muscleGroups: string[];
+}
+
+export interface LoggedWorkout {
+  id: string;
+  dayOfWeek: DayOfWeek;
+  workoutType: string; // split slot, e.g. "Push" | "Pull" | "Legs" | "Upper" | "Lower"
+  exercises: LoggedExercise[];
+  loggedAt: string;
+}
+
+export interface BaselineWeek {
+  loggedWorkouts: LoggedWorkout[];
+}
+
+export interface MesocycleWeekDay {
+  dayOfWeek: DayOfWeek;
+  workoutType: string | null;
+  workout: LoggedWorkout | null;
+}
+
+export interface MesocycleWeek {
+  weekNumber: number;
+  isBaseline: boolean;
+  days: MesocycleWeekDay[];
+}
+
+export interface Mesocycle {
+  lengthWeeks: number;
+  currentWeek: number;
+  weeks: MesocycleWeek[];
+}
+
+export interface Program {
+  id: string;
+  name: string;
+  splitType: SplitType;
+  weeklyCycle: WeeklyCycle;
+  mesocycleLengthWeeks: number;
+  progression: ProgressionSettings;
+  status: ProgramStatus;
+  baselineWeek: BaselineWeek;
+  mesocycle: Mesocycle | null;
+  createdAt: string;
+}
+
+export interface SplitSlotDefinition {
+  slot: string;
+  muscleGroups: string[];
+}
+
+export interface SplitDefinition {
+  type: SplitType;
+  label: string;
+  slots: SplitSlotDefinition[];
+}
+
+export interface ScheduledSession {
+  dayOfWeek: DayOfWeek;
+  workoutType: string;
+}
+
+export interface WeeklyWorkload {
+  frequencyByType: Record<string, number>;
+  totalSessions: number;
+  restDays: number;
+}
+
+export const SPLIT_DEFINITIONS: Record<SplitType, SplitDefinition> = {
+  PPL: {
+    type: "PPL",
+    label: "Push / Pull / Legs",
+    slots: [
+      { slot: "Push", muscleGroups: ["Chest", "Shoulders", "Triceps"] },
+      { slot: "Pull", muscleGroups: ["Back", "Biceps"] },
+      { slot: "Legs", muscleGroups: ["Quads", "Hamstrings", "Glutes", "Calves"] },
+    ],
+  },
+  UPPER_LOWER: {
+    type: "UPPER_LOWER",
+    label: "Upper / Lower",
+    slots: [
+      { slot: "Upper", muscleGroups: ["Chest", "Back", "Shoulders", "Arms"] },
+      { slot: "Lower", muscleGroups: ["Quads", "Hamstrings", "Glutes", "Calves"] },
+    ],
+  },
+};
+
+export const MESOCYCLE_LENGTH_OPTIONS = [3, 4, 5, 6] as const;
+
+export const REP_PROGRESSION_OPTIONS: { label: string; value: number }[] = [
+  { label: "None", value: 0 },
+  { label: "+1 Rep Weekly", value: 1 },
+  { label: "+2 Reps Weekly", value: 2 },
+];
+
+export const RPE_PROGRESSION_OPTIONS: { label: string; value: number }[] = [
+  { label: "None", value: 0 },
+  { label: "+0.5 Weekly", value: 0.5 },
+  { label: "+1 Weekly", value: 1 },
+];
+
+export function getSplitDefinition(splitType: SplitType): SplitDefinition {
+  return SPLIT_DEFINITIONS[splitType];
+}
+
+export function getSplitSlots(splitType: SplitType): string[] {
+  return SPLIT_DEFINITIONS[splitType].slots.map((slot) => slot.slot);
+}
+
+const DEFAULT_WEEKLY_CYCLES: Record<SplitType, (string | null)[]> = {
+  // Monday..Sunday
+  PPL: ["Push", "Pull", "Legs", null, "Push", "Pull", null],
+  UPPER_LOWER: ["Upper", "Lower", null, "Upper", "Lower", null, null],
+};
+
+export function getDefaultWeeklyCycle(splitType: SplitType): WeeklyCycle {
+  const template = DEFAULT_WEEKLY_CYCLES[splitType];
+  return {
+    days: DAYS_OF_WEEK.map((dayOfWeek, index) => ({
+      dayOfWeek,
+      workoutType: template[index] ?? null,
+    })),
+  };
+}
+
+export function getWeeklyWorkload(weeklyCycle: WeeklyCycle): WeeklyWorkload {
+  const frequencyByType: Record<string, number> = {};
+  let totalSessions = 0;
+  let restDays = 0;
+
+  for (const day of weeklyCycle.days) {
+    if (day.workoutType === null) {
+      restDays += 1;
+      continue;
+    }
+    frequencyByType[day.workoutType] = (frequencyByType[day.workoutType] ?? 0) + 1;
+    totalSessions += 1;
+  }
+
+  return { frequencyByType, totalSessions, restDays };
+}
+
+export function getScheduledSessions(weeklyCycle: WeeklyCycle): ScheduledSession[] {
+  return weeklyCycle.days
+    .filter((day): day is WeeklyCycleDay & { workoutType: string } => day.workoutType !== null)
+    .map((day) => ({ dayOfWeek: day.dayOfWeek, workoutType: day.workoutType }));
+}
+
+export function requiredSessionCount(weeklyCycle: WeeklyCycle): number {
+  return getScheduledSessions(weeklyCycle).length;
+}
+
+export function loggedSessionCount(program: Program): number {
+  return program.baselineWeek.loggedWorkouts.length;
+}
+
+export function isBaselineComplete(program: Program): boolean {
+  const required = requiredSessionCount(program.weeklyCycle);
+  return required > 0 && program.baselineWeek.loggedWorkouts.length >= required;
+}
+
+export function getLoggedWorkoutForDay(
+  program: Program,
+  dayOfWeek: DayOfWeek,
+): LoggedWorkout | undefined {
+  return program.baselineWeek.loggedWorkouts.find((workout) => workout.dayOfWeek === dayOfWeek);
+}
+
+export function createId(prefix: string): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+}
+
+export function createProgram(input: {
+  name: string;
+  splitType: SplitType;
+  weeklyCycle: WeeklyCycle;
+  mesocycleLengthWeeks: number;
+  progression: ProgressionSettings;
+}): Program {
+  return {
+    id: createId("program"),
+    name: input.name.trim(),
+    splitType: input.splitType,
+    weeklyCycle: input.weeklyCycle,
+    mesocycleLengthWeeks: input.mesocycleLengthWeeks,
+    progression: input.progression,
+    status: "collecting_baseline_week",
+    baselineWeek: {
+      loggedWorkouts: [],
+    },
+    mesocycle: null,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+const parseRepRange = (reps: string): { min: number; max: number } => {
+  const match = reps.match(/\d+/g);
+  if (!match || match.length === 0) {
+    return { min: 8, max: 12 };
+  }
+  const min = Number(match[0]);
+  const max = match.length > 1 ? Number(match[1]) : min;
+  return { min, max };
+};
+
+const parseRpe = (rirOrRpe: string | null): number => {
+  if (!rirOrRpe) {
+    return 7;
+  }
+  const rpeMatch = rirOrRpe.match(/RPE\s*([\d.]+)/i);
+  if (rpeMatch) {
+    return Number(rpeMatch[1]);
+  }
+  const rirMatch = rirOrRpe.match(/([\d.]+)\s*RIR/i);
+  if (rirMatch) {
+    // Convert a rough RIR to RPE (RPE = 10 - RIR), clamped to a sane floor.
+    return Math.max(6, 10 - Number(rirMatch[1]));
+  }
+  return 7;
+};
+
+export function createEmptyLoggedExercise(): LoggedExercise {
+  return {
+    name: "",
+    sets: 3,
+    repRangeMin: 8,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 7,
+    muscleGroups: [],
+  };
+}
+
+/**
+ * Seed a logged workout from the existing sample mock data for the requested
+ * workout type. Upper/Lower types are composed from the matching Push/Pull/Legs
+ * sample sessions so every type can be quick-filled in the demo. Weight defaults
+ * to 0 because the sample data has no weight; the user fills it in.
+ */
+export function buildQuickFillWorkout(
+  dayOfWeek: DayOfWeek,
+  workoutType: string,
+): LoggedWorkout {
+  const sampleByType: Record<string, string[]> = {
+    Push: ["Push"],
+    Pull: ["Pull"],
+    Legs: ["Legs"],
+    Upper: ["Push", "Pull"],
+    Lower: ["Legs"],
+  };
+
+  const sourceTypes = sampleByType[workoutType] ?? [];
+  const exercises: LoggedExercise[] = [];
+
+  for (const sourceType of sourceTypes) {
+    const sample = mockWorkoutWeek.workouts.find((workout) => workout.workoutType === sourceType);
+    if (!sample) {
+      continue;
+    }
+    for (const exercise of sample.exercises) {
+      const range = parseRepRange(exercise.reps);
+      exercises.push({
+        name: exercise.name,
+        sets: exercise.sets,
+        repRangeMin: range.min,
+        repRangeMax: range.max,
+        weight: 0,
+        rpe: parseRpe(exercise.rirOrRpe),
+        muscleGroups: [...exercise.muscleGroups],
+      });
+    }
+  }
+
+  return {
+    id: createId("workout"),
+    dayOfWeek,
+    workoutType,
+    exercises,
+    loggedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Placeholder progression logic. Intentionally simple and isolated so it can be
+ * replaced with real periodization rules later. Weight is left as-is per spec;
+ * only rep range, sets, and RPE progress.
+ */
+function progressExercise(
+  exercise: LoggedExercise,
+  weekNumber: number,
+  progression: ProgressionSettings,
+  lengthWeeks: number,
+): LoggedExercise {
+  const weekOffset = weekNumber - 1;
+  const repRangeMin = exercise.repRangeMin + progression.repProgression * weekOffset;
+  const repRangeMax = exercise.repRangeMax + progression.repProgression * weekOffset;
+  const rpe = Number((exercise.rpe + progression.rpeProgression * weekOffset).toFixed(2));
+  const addFinalSet = progression.setProgressionEnabled && weekNumber === lengthWeeks ? 1 : 0;
+  const sets = exercise.sets + addFinalSet;
+
+  return {
+    ...exercise,
+    sets,
+    repRangeMin,
+    repRangeMax,
+    rpe,
+    muscleGroups: [...exercise.muscleGroups],
+  };
+}
+
+function progressWorkout(
+  workout: LoggedWorkout,
+  weekNumber: number,
+  progression: ProgressionSettings,
+  lengthWeeks: number,
+): LoggedWorkout {
+  return {
+    ...workout,
+    id: createId("workout"),
+    exercises: workout.exercises.map((exercise) =>
+      progressExercise(exercise, weekNumber, progression, lengthWeeks),
+    ),
+  };
+}
+
+/**
+ * Generate the full mesocycle from the logged baseline week. Week 1 is the
+ * baseline (source of truth); later weeks apply the placeholder progression.
+ * Weeks mirror the configured weekly cycle, laid out day-by-day.
+ */
+export function generateMesocycle(program: Program): Mesocycle {
+  const lengthWeeks = program.mesocycleLengthWeeks;
+  const workoutByDay = new Map<DayOfWeek, LoggedWorkout>(
+    program.baselineWeek.loggedWorkouts.map((workout) => [workout.dayOfWeek, workout]),
+  );
+
+  const weeks: MesocycleWeek[] = [];
+  for (let weekNumber = 1; weekNumber <= lengthWeeks; weekNumber += 1) {
+    const isBaseline = weekNumber === 1;
+    const days: MesocycleWeekDay[] = program.weeklyCycle.days.map((cycleDay) => {
+      if (cycleDay.workoutType === null) {
+        return { dayOfWeek: cycleDay.dayOfWeek, workoutType: null, workout: null };
+      }
+      const baselineWorkout = workoutByDay.get(cycleDay.dayOfWeek);
+      if (!baselineWorkout) {
+        return { dayOfWeek: cycleDay.dayOfWeek, workoutType: cycleDay.workoutType, workout: null };
+      }
+      const workout = isBaseline
+        ? {
+            ...baselineWorkout,
+            id: createId("workout"),
+            exercises: baselineWorkout.exercises.map((exercise) => ({
+              ...exercise,
+              muscleGroups: [...exercise.muscleGroups],
+            })),
+          }
+        : progressWorkout(baselineWorkout, weekNumber, program.progression, lengthWeeks);
+      return { dayOfWeek: cycleDay.dayOfWeek, workoutType: cycleDay.workoutType, workout };
+    });
+
+    weeks.push({ weekNumber, isBaseline, days });
+  }
+
+  return {
+    lengthWeeks,
+    currentWeek: 1,
+    weeks,
+  };
+}
