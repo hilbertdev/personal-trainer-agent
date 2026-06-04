@@ -113,15 +113,17 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
         await connection.ExecuteAsync(
             new CommandDefinition(
                 """
-                INSERT INTO workout_templates (id, weekly_plan_id, name, day_of_week)
-                VALUES (@Id, @WeeklyPlanId, @Name, @DayOfWeek);
+                INSERT INTO workout_templates (id, weekly_plan_id, name, day_of_week, workout_type, description)
+                VALUES (@Id, @WeeklyPlanId, @Name, @DayOfWeek, @WorkoutType, @Description);
                 """,
                 new
                 {
                     Id = workoutTemplate.Id.ToString(),
                     WeeklyPlanId = weeklyPlanId.ToString(),
                     workoutTemplate.Name,
-                    DayOfWeek = workoutTemplate.DayOfWeek.ToString()
+                    DayOfWeek = workoutTemplate.DayOfWeek.ToString(),
+                    workoutTemplate.WorkoutType,
+                    workoutTemplate.Description
                 },
                 transaction,
                 cancellationToken: cancellationToken));
@@ -137,9 +139,14 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                         workout_template_id,
                         sort_order,
                         exercise_name,
+                        warmup_sets,
                         target_sets,
                         target_rep_min,
                         target_rep_max,
+                        early_set_rpe,
+                        last_set_rpe,
+                        rest_time,
+                        last_set_intensity_technique,
                         notes,
                         category)
                     VALUES (
@@ -147,9 +154,14 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                         @WorkoutTemplateId,
                         @SortOrder,
                         @ExerciseName,
+                        @WarmupSets,
                         @TargetSets,
                         @TargetRepMin,
                         @TargetRepMax,
+                        @EarlySetRpe,
+                        @LastSetRpe,
+                        @RestTime,
+                        @LastSetIntensityTechnique,
                         @Notes,
                         @Category);
                     """,
@@ -159,14 +171,47 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                         WorkoutTemplateId = workoutTemplate.Id.ToString(),
                         SortOrder = index,
                         exercise.ExerciseName,
+                        exercise.WarmupSets,
                         exercise.TargetSets,
                         TargetRepMin = exercise.TargetRepRange.Min,
                         TargetRepMax = exercise.TargetRepRange.Max,
+                        exercise.EarlySetRpe,
+                        exercise.LastSetRpe,
+                        exercise.RestTime,
+                        exercise.LastSetIntensityTechnique,
                         exercise.Notes,
                         Category = exercise.Category.ToString()
                     },
                     transaction,
                     cancellationToken: cancellationToken));
+
+            for (var substitutionIndex = 0; substitutionIndex < exercise.Substitutions.Count; substitutionIndex++)
+            {
+                var substitution = exercise.Substitutions[substitutionIndex];
+                await connection.ExecuteAsync(
+                    new CommandDefinition(
+                        """
+                        INSERT INTO exercise_template_substitutions (
+                            id,
+                            exercise_template_id,
+                            sort_order,
+                            exercise_name)
+                        VALUES (
+                            @Id,
+                            @ExerciseTemplateId,
+                            @SortOrder,
+                            @ExerciseName);
+                        """,
+                        new
+                        {
+                            Id = substitution.Id.ToString(),
+                            ExerciseTemplateId = exercise.Id.ToString(),
+                            SortOrder = substitutionIndex,
+                            substitution.ExerciseName
+                        },
+                        transaction,
+                        cancellationToken: cancellationToken));
+            }
         }
 
         await transaction.CommitAsync(cancellationToken);
@@ -584,7 +629,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                         id TEXT PRIMARY KEY,
                         weekly_plan_id TEXT NOT NULL REFERENCES weekly_plans(id) ON DELETE CASCADE,
                         name TEXT NOT NULL,
-                        day_of_week TEXT NOT NULL
+                        day_of_week TEXT NOT NULL,
+                        workout_type TEXT NULL,
+                        description TEXT NULL
                     );
 
                     CREATE TABLE IF NOT EXISTS exercise_templates (
@@ -592,11 +639,23 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                         workout_template_id TEXT NOT NULL REFERENCES workout_templates(id) ON DELETE CASCADE,
                         sort_order INTEGER NOT NULL,
                         exercise_name TEXT NOT NULL,
+                        warmup_sets TEXT NULL,
                         target_sets INTEGER NOT NULL,
                         target_rep_min INTEGER NOT NULL,
                         target_rep_max INTEGER NOT NULL,
+                        early_set_rpe TEXT NULL,
+                        last_set_rpe TEXT NULL,
+                        rest_time TEXT NULL,
+                        last_set_intensity_technique TEXT NULL,
                         notes TEXT NULL,
                         category TEXT NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS exercise_template_substitutions (
+                        id TEXT PRIMARY KEY,
+                        exercise_template_id TEXT NOT NULL REFERENCES exercise_templates(id) ON DELETE CASCADE,
+                        sort_order INTEGER NOT NULL,
+                        exercise_name TEXT NOT NULL
                     );
 
                     CREATE TABLE IF NOT EXISTS exercise_substitutions (
@@ -648,10 +707,55 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                         ON training_programs(athlete_id, start_date, end_date);
                     CREATE INDEX IF NOT EXISTS idx_exercise_substitutions_lookup
                         ON exercise_substitutions(athlete_id, original_exercise_template_id, original_exercise_name, substituted_exercise_name);
+                    CREATE INDEX IF NOT EXISTS idx_exercise_template_substitutions_template
+                        ON exercise_template_substitutions(exercise_template_id, sort_order);
                     CREATE INDEX IF NOT EXISTS idx_workout_executions_athlete_date
                         ON workout_executions(athlete_id, workout_date);
                     """,
                     cancellationToken: cancellationToken));
+
+            await EnsureColumnAsync(
+                connection,
+                "workout_templates",
+                "workout_type",
+                "TEXT NULL",
+                cancellationToken);
+            await EnsureColumnAsync(
+                connection,
+                "workout_templates",
+                "description",
+                "TEXT NULL",
+                cancellationToken);
+            await EnsureColumnAsync(
+                connection,
+                "exercise_templates",
+                "warmup_sets",
+                "TEXT NULL",
+                cancellationToken);
+            await EnsureColumnAsync(
+                connection,
+                "exercise_templates",
+                "early_set_rpe",
+                "TEXT NULL",
+                cancellationToken);
+            await EnsureColumnAsync(
+                connection,
+                "exercise_templates",
+                "last_set_rpe",
+                "TEXT NULL",
+                cancellationToken);
+            await EnsureColumnAsync(
+                connection,
+                "exercise_templates",
+                "rest_time",
+                "TEXT NULL",
+                cancellationToken);
+            await EnsureColumnAsync(
+                connection,
+                "exercise_templates",
+                "last_set_intensity_technique",
+                "TEXT NULL",
+                cancellationToken);
 
             _schemaEnsured = true;
         }
@@ -659,6 +763,40 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
         {
             _schemaLock.Release();
         }
+    }
+
+    private static async Task EnsureColumnAsync(
+        IDbConnection connection,
+        string tableName,
+        string columnName,
+        string definition,
+        CancellationToken cancellationToken)
+    {
+        if (!IsSafeIdentifier(tableName) || !IsSafeIdentifier(columnName))
+        {
+            throw new InvalidOperationException("Unsafe SQLite identifier was provided for schema migration.");
+        }
+
+        var columns = await connection.QueryAsync<string>(
+            new CommandDefinition(
+                "SELECT name FROM pragma_table_info(@TableName);",
+                new { TableName = tableName },
+                cancellationToken: cancellationToken));
+
+        if (columns.Any(column => string.Equals(column, columnName, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                $"ALTER TABLE {tableName} ADD COLUMN {columnName} {definition};",
+                cancellationToken: cancellationToken));
+    }
+
+    private static bool IsSafeIdentifier(string value)
+    {
+        return value.All(character => char.IsLetterOrDigit(character) || character is '_');
     }
 
     private static async Task<TrainingProgram?> LoadProgramAsync(
@@ -776,7 +914,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 SELECT
                     id AS Id,
                     name AS Name,
-                    day_of_week AS DayOfWeek
+                    day_of_week AS DayOfWeek,
+                    workout_type AS WorkoutType,
+                    description AS Description
                 FROM workout_templates
                 WHERE weekly_plan_id = @WeeklyPlanId
                 ORDER BY
@@ -814,7 +954,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 SELECT
                     id AS Id,
                     name AS Name,
-                    day_of_week AS DayOfWeek
+                    day_of_week AS DayOfWeek,
+                    workout_type AS WorkoutType,
+                    description AS Description
                 FROM workout_templates
                 WHERE id = @WorkoutTemplateId;
                 """,
@@ -837,7 +979,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
             Guid.Parse(row.Id),
             row.Name,
             Enum.Parse<DayOfWeek>(row.DayOfWeek),
-            exercises);
+            exercises,
+            row.WorkoutType,
+            row.Description);
     }
 
     private static async Task<IReadOnlyList<ExerciseTemplate>> LoadExerciseTemplatesAsync(
@@ -851,9 +995,14 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 SELECT
                     id AS Id,
                     exercise_name AS ExerciseName,
+                    warmup_sets AS WarmupSets,
                     target_sets AS TargetSets,
                     target_rep_min AS TargetRepMin,
                     target_rep_max AS TargetRepMax,
+                    early_set_rpe AS EarlySetRpe,
+                    last_set_rpe AS LastSetRpe,
+                    rest_time AS RestTime,
+                    last_set_intensity_technique AS LastSetIntensityTechnique,
                     notes AS Notes,
                     category AS Category
                 FROM exercise_templates
@@ -863,14 +1012,53 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 new { WorkoutTemplateId = workoutTemplateId.ToString() },
                 cancellationToken: cancellationToken));
 
-        return rows
-            .Select(row => new ExerciseTemplate(
-                Guid.Parse(row.Id),
+        var exercises = new List<ExerciseTemplate>();
+
+        foreach (var row in rows)
+        {
+            var exerciseTemplateId = Guid.Parse(row.Id);
+            var substitutions = await LoadExerciseTemplateSubstitutionsAsync(
+                connection,
+                exerciseTemplateId,
+                cancellationToken);
+            exercises.Add(new ExerciseTemplate(
+                exerciseTemplateId,
                 row.ExerciseName,
+                row.WarmupSets,
                 (int)row.TargetSets,
                 new RepRange((int)row.TargetRepMin, (int)row.TargetRepMax),
+                row.EarlySetRpe,
+                row.LastSetRpe,
+                row.RestTime,
+                row.LastSetIntensityTechnique,
                 row.Notes,
-                Enum.Parse<ExerciseCategory>(row.Category)))
+                Enum.Parse<ExerciseCategory>(row.Category),
+                substitutions));
+        }
+
+        return exercises;
+    }
+
+    private static async Task<IReadOnlyList<ExerciseTemplateSubstitution>> LoadExerciseTemplateSubstitutionsAsync(
+        IDbConnection connection,
+        Guid exerciseTemplateId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await connection.QueryAsync<ExerciseTemplateSubstitutionRow>(
+            new CommandDefinition(
+                """
+                SELECT
+                    id AS Id,
+                    exercise_name AS ExerciseName
+                FROM exercise_template_substitutions
+                WHERE exercise_template_id = @ExerciseTemplateId
+                ORDER BY sort_order, exercise_name;
+                """,
+                new { ExerciseTemplateId = exerciseTemplateId.ToString() },
+                cancellationToken: cancellationToken));
+
+        return rows
+            .Select(row => new ExerciseTemplateSubstitution(Guid.Parse(row.Id), row.ExerciseName))
             .ToList();
     }
 
@@ -1191,7 +1379,9 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
     private sealed record WorkoutTemplateRow(
         string Id,
         string Name,
-        string DayOfWeek);
+        string DayOfWeek,
+        string? WorkoutType,
+        string? Description);
 
     private sealed record WorkoutTemplateLookupRow(
         string Id,
@@ -1201,11 +1391,20 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
     private sealed record ExerciseTemplateRow(
         string Id,
         string ExerciseName,
+        string? WarmupSets,
         long TargetSets,
         long TargetRepMin,
         long TargetRepMax,
+        string? EarlySetRpe,
+        string? LastSetRpe,
+        string? RestTime,
+        string? LastSetIntensityTechnique,
         string? Notes,
         string Category);
+
+    private sealed record ExerciseTemplateSubstitutionRow(
+        string Id,
+        string ExerciseName);
 
     private sealed record ExerciseSubstitutionRow(
         string Id,

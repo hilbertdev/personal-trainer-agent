@@ -84,12 +84,26 @@ public sealed class TrainingProgramService(
             .Select(exercise => new ExerciseTemplate(
                 Guid.NewGuid(),
                 RequireText(exercise.ExerciseName, nameof(exercise.ExerciseName)),
+                CleanOptionalText(exercise.WarmupSets),
                 exercise.TargetSets,
                 new RepRange(exercise.TargetRepMin, exercise.TargetRepMax),
+                CleanOptionalText(exercise.EarlySetRpe),
+                CleanOptionalText(exercise.LastSetRpe),
+                CleanOptionalText(exercise.RestTime),
+                CleanOptionalText(exercise.LastSetIntensityTechnique),
                 exercise.Notes,
-                exercise.Category))
+                exercise.Category,
+                CleanSubstitutionNames(exercise.Substitutions)
+                    .Select(name => new ExerciseTemplateSubstitution(Guid.NewGuid(), name))
+                    .ToList()))
             .ToList();
-        var workoutTemplate = new WorkoutTemplate(Guid.NewGuid(), command.Name, command.DayOfWeek, exercises);
+        var workoutTemplate = new WorkoutTemplate(
+            Guid.NewGuid(),
+            command.Name,
+            command.DayOfWeek,
+            exercises,
+            CleanOptionalText(command.WorkoutType),
+            CleanOptionalText(command.Description));
 
         return await trainingProgramRepository.AddWorkoutTemplateAsync(
             command.WeeklyPlanId,
@@ -295,6 +309,20 @@ public sealed class TrainingProgramService(
             .Select(tag => tag.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    private static IReadOnlyList<string> CleanSubstitutionNames(IReadOnlyList<string>? names)
+    {
+        return (names ?? [])
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string? CleanOptionalText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     private static string RequireText(string value, string name)
