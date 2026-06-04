@@ -26,7 +26,7 @@ src/
   Training.Console/         # CLI entry point using the same services
 frontend/                         # Vite + React + TypeScript + Tailwind + shadcn-style UI
 Dockerfile.api                    # Backend container
-docker-compose.yml                # Local API + SQLite volume
+docker-compose.yml                # Local API + frontend + SQLite volume
 fly.toml                          # Cheap backend deployment config
 ```
 
@@ -80,7 +80,22 @@ Existing agent discovery endpoints remain available:
 
 ## Docker
 
-Start the API with a persistent SQLite volume:
+Start the API and frontend (nginx serves the UI on port 3000 and proxies `/api` to the backend):
+
+```bash
+docker compose up --build
+```
+
+- UI: [http://localhost:3000](http://localhost:3000)
+- API: [http://localhost:8080](http://localhost:8080) (Swagger at `/swagger`)
+
+Mock-only frontend (no API container):
+
+```bash
+docker compose --profile mock up --build frontend-mock
+```
+
+API only with a persistent SQLite volume:
 
 ```bash
 docker compose up --build api
@@ -92,7 +107,7 @@ Run the console planner against the same SQLite volume:
 docker compose run --rm --build console
 ```
 
-The compose file creates a `training-sqlite-data` volume so workout and progress rows survive container restarts.
+The compose file creates a `workout-planner-sqlite` volume so workout and progress rows survive container restarts.
 
 ## Frontend features
 

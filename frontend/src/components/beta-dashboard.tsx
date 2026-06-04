@@ -10,6 +10,7 @@ import {
   Flame,
   HeartPulse,
   Loader2,
+  Plus,
   Sparkles,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -18,6 +19,7 @@ import {
   getProgress,
   getSampleWorkout,
   recordCompletedWorkout,
+  USE_MOCK_DATA,
   type ProjectedWeek,
   type WorkoutAnalysis,
   type WorkoutDay,
@@ -35,6 +37,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useProgram } from "@/program-context";
 import { cn } from "@/lib/utils";
 
 export function BetaDashboard() {
@@ -210,6 +213,8 @@ export function BetaDashboard() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
+  const { openWizard } = useProgram();
+
   return (
     <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#bef264_0,#f4f4f5_35%,#e4e4e7_75%)] px-4 py-5 text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,#4d7c0f_0,#18181b_35%,#030712_75%)] dark:text-white sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-5">
@@ -220,7 +225,12 @@ function Shell({ children }: { children: React.ReactNode }) {
               Personal Trainer Agent
             </h1>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <Button type="button" size="sm" onClick={openWizard}>
+              <Plus className="h-4 w-4" /> Create Workout Plan
+            </Button>
+            <ThemeToggle />
+          </div>
         </header>
         {children}
       </div>
@@ -241,11 +251,14 @@ function Hero({ analysis, sample }: { analysis: WorkoutAnalysis; sample: Workout
           <Badge tone="zinc">{sample.summary.totalSets} sets</Badge>
         </div>
         <h2 className="max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-6xl">
-          Launch-ready workout planning without a live backend dependency.
+          {USE_MOCK_DATA
+            ? "Launch-ready workout planning without a live backend dependency."
+            : "Workout planning powered by your training API."}
         </h2>
         <p className="mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-300 sm:text-lg">
-          The frontend is running against mock services that preserve the backend response shapes,
-          so the demo remains fully navigable while the API is offline.
+          {USE_MOCK_DATA
+            ? "The frontend is running against mock services that preserve the backend response shapes, so the demo remains fully navigable while the API is offline."
+            : "Sample workouts, fatigue analysis, and progress are loaded from the ASP.NET API. If the API is unreachable, the dashboard falls back to the same mock data."}
         </p>
       </CardHeader>
       <div className="grid gap-3 sm:grid-cols-3">

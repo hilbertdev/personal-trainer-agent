@@ -7,7 +7,9 @@ COPY src/Training.Application/Training.Application.csproj src/Training.Applicati
 COPY src/Training.Infrastructure/Training.Infrastructure.csproj src/Training.Infrastructure/
 COPY src/Training.Strava/Training.Strava.csproj src/Training.Strava/
 COPY src/Training.Api/Training.Api.csproj src/Training.Api/
-RUN dotnet restore src/Training.Api/Training.Api.csproj
+RUN dotnet restore src/Training.Infrastructure/Training.Infrastructure.csproj \
+    && dotnet restore src/Training.Strava/Training.Strava.csproj \
+    && dotnet restore src/Training.Api/Training.Api.csproj
 
 COPY . .
 RUN dotnet publish src/Training.Api/Training.Api.csproj \

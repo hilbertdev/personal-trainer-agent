@@ -13,10 +13,32 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
 
-To connect to the ASP.NET API instead of mock data, set:
+To connect to the ASP.NET API instead of mock data (Vite proxies `/api` to `http://localhost:8080`):
+
+```bash
+VITE_USE_MOCK_DATA=false VITE_API_URL= npm run dev
+```
+
+Or call the API directly:
 
 ```bash
 VITE_USE_MOCK_DATA=false VITE_API_URL=http://localhost:8080 npm run dev
+```
+
+## Docker
+
+From the repository root, start the full stack:
+
+```bash
+docker compose up --build
+```
+
+Open [http://localhost:3000](http://localhost:3000). The frontend container proxies `/api` to the `api` service. Mock data in `src/mock-data/workouts.ts` is used when `VITE_USE_MOCK_DATA=true` or when API requests fail.
+
+Mock-only UI without the API:
+
+```bash
+docker compose --profile mock up --build frontend-mock
 ```
 
 ## Scripts
