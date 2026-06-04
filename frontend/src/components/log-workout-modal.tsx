@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Sparkles, Trash2 } from "lucide-react";
+import { HeartPulse, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -12,6 +12,35 @@ import {
   type LoggedExercise,
   type LoggedWorkout,
 } from "@/lib/program";
+
+interface SessionDetails {
+  avgHeartRate: number | null;
+  maxHeartRate: number | null;
+  effort: number | null;
+  durationMinutes: number | null;
+  notes: string;
+}
+
+const EMPTY_SESSION_DETAILS: SessionDetails = {
+  avgHeartRate: null,
+  maxHeartRate: null,
+  effort: null,
+  durationMinutes: null,
+  notes: "",
+};
+
+function sessionDetailsFrom(existing?: LoggedWorkout): SessionDetails {
+  if (!existing) {
+    return { ...EMPTY_SESSION_DETAILS };
+  }
+  return {
+    avgHeartRate: existing.heartRate?.avg ?? null,
+    maxHeartRate: existing.heartRate?.max ?? null,
+    effort: existing.effort ?? null,
+    durationMinutes: existing.durationMinutes ?? null,
+    notes: existing.notes ?? "",
+  };
+}
 
 export function LogWorkoutModal({
   open,
@@ -29,6 +58,7 @@ export function LogWorkoutModal({
   onSave: (workout: LoggedWorkout) => void;
 }) {
   const [exercises, setExercises] = useState<LoggedExercise[]>([createEmptyLoggedExercise()]);
+  const [session, setSession] = useState<SessionDetails>(() => sessionDetailsFrom(existing));
 
   // Reset the form whenever a new session is opened.
   useEffect(() => {
@@ -40,7 +70,12 @@ export function LogWorkoutModal({
         ? existing.exercises.map((exercise) => ({ ...exercise, muscleGroups: [...exercise.muscleGroups] }))
         : [createEmptyLoggedExercise()],
     );
+    setSession(sessionDetailsFrom(existing));
   }, [open, existing]);
+
+  const updateSession = (patch: Partial<SessionDetails>) => {
+    setSession((current) => ({ ...current, ...patch }));
+  };
 
   const updateExercise = (index: number, patch: Partial<LoggedExercise>) => {
     setExercises((current) =>
@@ -69,6 +104,12 @@ export function LogWorkoutModal({
     if (!canSave) {
       return;
     }
+    const heartRate =
+      session.avgHeartRate !== null
+        ? { avg: session.avgHeartRate, max: session.maxHeartRate ?? undefined }
+        : undefined;
+    const trimmedNotes = session.notes.trim();
+
     onSave({
       id: existing?.id ?? createId("workout"),
       dayOfWeek,
@@ -78,6 +119,15 @@ export function LogWorkoutModal({
         name: exercise.name.trim(),
       })),
       loggedAt: new Date().toISOString(),
+      heartRate,
+      effort: session.effort ?? undefined,
+      durationMinutes: session.durationMinutes ?? undefined,
+      notes: trimmedNotes.length > 0 ? trimmedNotes : undefined,
+      sessionType: workoutType,
+      // Preserve any prior Strava enrichment so re-editing a workout does not
+      // silently discard mapped activity data.
+      stravaData: existing?.stravaData,
+      enrichmentStatus: existing?.enrichmentStatus,
     });
     onClose();
   };
@@ -105,6 +155,55 @@ export function LogWorkoutModal({
         <Button type="button" variant="secondary" size="sm" onClick={quickFill}>
           <Sparkles className="h-4 w-4" /> Quick-fill from sample
         </Button>
+      </div>
+
+      <div className="mb-4 rounded-3xl border border-zinc-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="flex items-center gap-2">
+          <HeartPulse className="h-4 w-4 text-rose-400" />
+          <p className="text-sm font-bold">Session details</p>
+          <span className="text-xs text-zinc-400">optional</span>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <OptionalNumberField
+            label="Avg HR (bpm)"
+            value={session.avgHeartRate}
+            min={0}
+            step={1}
+            onChange={(value) => updateSession({ avgHeartRate: value })}
+          />
+          <OptionalNumberField
+            label="Max HR (bpm)"
+            value={session.maxHeartRate}
+            min={0}
+            step={1}
+            onChange={(value) => updateSession({ maxHeartRate: value })}
+          />
+          <OptionalNumberField
+            label="Effort (1-10)"
+            value={session.effort}
+            min={1}
+            max={10}
+            step={1}
+            onChange={(value) => updateSession({ effort: value })}
+          />
+          <OptionalNumberField
+            label="Duration (min)"
+            value={session.durationMinutes}
+            min={0}
+            step={1}
+            onChange={(value) => updateSession({ durationMinutes: value })}
+          />
+        </div>
+        <label className="mt-3 block">
+          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Notes</span>
+          <textarea
+            value={session.notes}
+            onChange={(event) => updateSession({ notes: event.target.value })}
+            placeholder="How did the session feel?"
+            rows={2}
+            className="mt-1 w-full resize-none rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+          />
+        </label>
       </div>
 
       <div className="space-y-3">
@@ -177,6 +276,40 @@ export function LogWorkoutModal({
         <Plus className="h-4 w-4" /> Add exercise
       </Button>
     </Modal>
+  );
+}
+
+function OptionalNumberField({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  min?: number;
+  max?: number;
+  step?: number;
+  onChange: (value: number | null) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</span>
+      <input
+        type="number"
+        value={value ?? ""}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(event) => {
+          const next = event.target.valueAsNumber;
+          onChange(Number.isNaN(next) ? null : next);
+        }}
+        className="mt-1 w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+      />
+    </label>
   );
 }
 

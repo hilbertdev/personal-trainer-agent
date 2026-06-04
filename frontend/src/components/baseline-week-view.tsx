@@ -1,12 +1,25 @@
 "use client";
 
-import { CheckCircle2, Clock, Dumbbell, Moon, Pencil, RotateCcw, Sparkles } from "lucide-react";
+import {
+  Activity,
+  CheckCircle2,
+  Clock,
+  Dumbbell,
+  Flame,
+  HeartPulse,
+  Moon,
+  Pencil,
+  RotateCcw,
+  Sparkles,
+  Timer,
+} from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { LogWorkoutModal } from "@/components/log-workout-modal";
+import { StravaMappingModal } from "@/components/strava-mapping-modal";
 import { WeeklyWorkloadSummary } from "@/components/weekly-workload-summary";
 import {
   getLoggedWorkoutForDay,
@@ -28,7 +41,8 @@ interface ActiveSession {
 }
 
 export function BaselineWeekView({ program }: { program: Program }) {
-  const { logWorkout, generateMesocycle, resetProgram } = useProgram();
+  const { logWorkout, generateMesocycle, resetProgram, syncStrava, stravaSyncStatus } =
+    useProgram();
   const definition = getSplitDefinition(program.splitType);
   const requiredSessions = requiredSessionCount(program.weeklyCycle);
   const loggedCount = loggedSessionCount(program);
@@ -36,6 +50,13 @@ export function BaselineWeekView({ program }: { program: Program }) {
   const percent = requiredSessions === 0 ? 0 : Math.round((loggedCount / requiredSessions) * 100);
 
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+  const [isMappingOpen, setIsMappingOpen] = useState(false);
+
+  const isSyncing = stravaSyncStatus === "syncing";
+  const handleSyncStrava = async () => {
+    await syncStrava();
+    setIsMappingOpen(true);
+  };
 
   return (
     <div className="grid gap-4">
@@ -82,10 +103,29 @@ export function BaselineWeekView({ program }: { program: Program }) {
       <section className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Baseline Week</CardTitle>
-            <CardDescription>
-              Log the real workout you performed for each scheduled day.
-            </CardDescription>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle>Baseline Week</CardTitle>
+                <CardDescription>
+                  Log the real workout you performed for each scheduled day.
+                </CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={loggedCount === 0 || isSyncing}
+                onClick={handleSyncStrava}
+              >
+                <Activity className="h-4 w-4" />
+                {isSyncing ? "Syncing..." : "Sync Strava Activities"}
+              </Button>
+            </div>
+            {stravaSyncStatus === "error" && (
+              <p className="mt-2 text-xs font-semibold text-red-500">
+                Could not sync Strava. Please try again.
+              </p>
+            )}
           </CardHeader>
           <div className="space-y-2">
             {program.weeklyCycle.days.map((day) => {
@@ -176,6 +216,8 @@ export function BaselineWeekView({ program }: { program: Program }) {
                       )}
                     </ul>
                   )}
+
+                  {logged && <WorkoutPhysiology workout={logged} />}
                 </div>
               );
             })}
@@ -221,6 +263,71 @@ export function BaselineWeekView({ program }: { program: Program }) {
           onSave={logWorkout}
         />
       )}
+
+      <StravaMappingModal
+        open={isMappingOpen}
+        onClose={() => setIsMappingOpen(false)}
+        program={program}
+      />
+    </div>
+  );
+}
+
+function WorkoutPhysiology({ workout }: { workout: LoggedWorkout }) {
+  const enriched = workout.enrichmentStatus === "enriched";
+  const calories = workout.stravaData?.calories;
+  const distanceKm = workout.stravaData?.distanceKm;
+  const hasPhysiology =
+    workout.heartRate !== undefined ||
+    workout.effort !== undefined ||
+    workout.durationMinutes !== undefined ||
+    calories !== undefined ||
+    distanceKm !== undefined;
+
+  if (!hasPhysiology && !enriched) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-white/10">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+        {workout.heartRate && (
+          <span className="inline-flex items-center gap-1">
+            <HeartPulse className="h-3.5 w-3.5 text-rose-400" />
+            {workout.heartRate.avg} bpm
+            {workout.heartRate.max ? ` (max ${workout.heartRate.max})` : ""}
+          </span>
+        )}
+        {workout.effort !== undefined && (
+          <span className="inline-flex items-center gap-1">
+            <Activity className="h-3.5 w-3.5 text-amber-400" />
+            Effort {workout.effort}/10
+          </span>
+        )}
+        {workout.durationMinutes !== undefined && (
+          <span className="inline-flex items-center gap-1">
+            <Timer className="h-3.5 w-3.5 text-sky-400" />
+            {workout.durationMinutes} min
+          </span>
+        )}
+        {calories !== undefined && (
+          <span className="inline-flex items-center gap-1">
+            <Flame className="h-3.5 w-3.5 text-orange-400" />
+            {calories} kcal
+          </span>
+        )}
+        {distanceKm !== undefined && (
+          <span className="inline-flex items-center gap-1">
+            <Activity className="h-3.5 w-3.5 text-emerald-400" />
+            {distanceKm} km
+          </span>
+        )}
+      </div>
+      <div className="mt-2">
+        <Badge tone={enriched ? "lime" : "zinc"}>
+          {enriched ? "Enriched with Strava" : "Manual"}
+        </Badge>
+      </div>
     </div>
   );
 }

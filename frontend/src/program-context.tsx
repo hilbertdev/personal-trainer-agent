@@ -11,6 +11,7 @@ import {
 } from "react";
 import {
   createProgram as createProgramRecord,
+  enrichWorkout,
   generateMesocycle as generateMesocycleRecord,
   getScheduledSessions,
   type DayOfWeek,
@@ -18,10 +19,15 @@ import {
   type Program,
   type ProgressionSettings,
   type SplitType,
+  type StravaActivity,
   type WeeklyCycle,
+  type WorkoutMapping,
 } from "@/lib/program";
+import { syncStravaActivities } from "@/lib/strava";
 
 const STORAGE_KEY = "pta:active-program";
+
+export type StravaSyncStatus = "idle" | "syncing" | "synced" | "error";
 
 export interface CreateProgramInput {
   name: string;
@@ -42,6 +48,14 @@ interface ProgramContextValue {
   generateMesocycle: () => void;
   advanceWeek: () => void;
   resetProgram: () => void;
+  // Strava sync + enrichment (additive; does not affect baseline completion).
+  stravaActivities: StravaActivity[];
+  pendingMappings: WorkoutMapping[];
+  stravaSyncStatus: StravaSyncStatus;
+  syncStrava: () => Promise<void>;
+  setMapping: (workoutId: string, activityId: string | null) => void;
+  confirmMappings: () => void;
+  resetStravaSync: () => void;
 }
 
 const ProgramContext = createContext<ProgramContextValue | null>(null);
@@ -78,6 +92,9 @@ function loadProgram(): Program | null {
 export function ProgramProvider({ children }: { children: ReactNode }) {
   const [activeProgram, setActiveProgram] = useState<Program | null>(() => loadProgram());
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
+  const [pendingMappings, setPendingMappings] = useState<WorkoutMapping[]>([]);
+  const [stravaSyncStatus, setStravaSyncStatus] = useState<StravaSyncStatus>("idle");
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -172,6 +189,71 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   const resetProgram = useCallback(() => {
     setActiveProgram(null);
     setIsWizardOpen(false);
+    setStravaActivities([]);
+    setPendingMappings([]);
+    setStravaSyncStatus("idle");
+  }, []);
+
+  const syncStrava = useCallback(async () => {
+    setStravaSyncStatus("syncing");
+    try {
+      const activities = await syncStravaActivities();
+      setStravaActivities(activities);
+      setPendingMappings([]);
+      setStravaSyncStatus("synced");
+    } catch {
+      setStravaSyncStatus("error");
+    }
+  }, []);
+
+  const setMapping = useCallback((workoutId: string, activityId: string | null) => {
+    setPendingMappings((current) => {
+      const withoutWorkout = current.filter((mapping) => mapping.workoutId !== workoutId);
+      if (!activityId) {
+        return withoutWorkout;
+      }
+      // An activity can only map to one workout, so drop any prior owner.
+      const withoutActivity = withoutWorkout.filter((mapping) => mapping.activityId !== activityId);
+      return [...withoutActivity, { workoutId, activityId }];
+    });
+  }, []);
+
+  const confirmMappings = useCallback(() => {
+    setActiveProgram((current) => {
+      if (!current) {
+        return current;
+      }
+      if (pendingMappings.length === 0) {
+        return current;
+      }
+      const activityById = new Map(
+        stravaActivities.map((activity) => [activity.activityId, activity]),
+      );
+      const mappingByWorkout = new Map(
+        pendingMappings.map((mapping) => [mapping.workoutId, mapping.activityId]),
+      );
+
+      return {
+        ...current,
+        baselineWeek: {
+          ...current.baselineWeek,
+          loggedWorkouts: current.baselineWeek.loggedWorkouts.map((workout) => {
+            const activityId = mappingByWorkout.get(workout.id);
+            if (!activityId) {
+              return workout;
+            }
+            const activity = activityById.get(activityId);
+            return activity ? enrichWorkout(workout, activity) : workout;
+          }),
+        },
+      };
+    });
+  }, [pendingMappings, stravaActivities]);
+
+  const resetStravaSync = useCallback(() => {
+    setStravaActivities([]);
+    setPendingMappings([]);
+    setStravaSyncStatus("idle");
   }, []);
 
   const value = useMemo<ProgramContextValue>(
@@ -186,6 +268,13 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       generateMesocycle,
       advanceWeek,
       resetProgram,
+      stravaActivities,
+      pendingMappings,
+      stravaSyncStatus,
+      syncStrava,
+      setMapping,
+      confirmMappings,
+      resetStravaSync,
     }),
     [
       activeProgram,
@@ -198,6 +287,13 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       generateMesocycle,
       advanceWeek,
       resetProgram,
+      stravaActivities,
+      pendingMappings,
+      stravaSyncStatus,
+      syncStrava,
+      setMapping,
+      confirmMappings,
+      resetStravaSync,
     ],
   );
 

@@ -48,12 +48,60 @@ export interface LoggedExercise {
   muscleGroups: string[];
 }
 
+export interface HeartRateData {
+  avg: number;
+  max?: number;
+}
+
+export type EnrichmentStatus = "manual" | "enriched";
+
+export interface WorkoutStravaData {
+  activityId: string;
+  durationMinutes: number;
+  avgHeartRate?: number;
+  maxHeartRate?: number;
+  calories?: number;
+  distanceKm?: number;
+}
+
 export interface LoggedWorkout {
   id: string;
   dayOfWeek: DayOfWeek;
   workoutType: string; // split slot, e.g. "Push" | "Pull" | "Legs" | "Upper" | "Lower"
   exercises: LoggedExercise[];
   loggedAt: string;
+
+  // Optional physiological inputs captured manually alongside the lifting data.
+  heartRate?: HeartRateData;
+  effort?: number; // perceived effort 1-10
+  durationMinutes?: number;
+  notes?: string;
+  sessionType?: string; // defaults to workoutType when not set
+
+  // Populated only after a confirmed Strava mapping (see enrichWorkout).
+  stravaData?: WorkoutStravaData;
+  enrichmentStatus?: EnrichmentStatus;
+}
+
+/**
+ * A single activity returned by the Strava sync. Kept provider-agnostic so the
+ * mock and real backend services can both produce this shape.
+ */
+export interface StravaActivity {
+  activityId: string;
+  name: string;
+  durationMinutes: number;
+  avgHeartRate?: number;
+  maxHeartRate?: number;
+  calories?: number;
+  distanceKm?: number;
+  startedAt: string;
+}
+
+/** A user-confirmed link between a logged workout and a Strava activity. */
+export interface WorkoutMapping {
+  workoutId: string;
+  activityId: string;
 }
 
 export interface BaselineWeek {
@@ -328,6 +376,39 @@ export function buildQuickFillWorkout(
     workoutType,
     exercises,
     loggedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Merge a Strava activity into a logged workout. Manual strength data
+ * (sets / reps / weight / RPE) is the source of truth and is never overwritten.
+ * Strava only fills physiological + external gaps: heart rate, duration,
+ * calories, and distance. Manual values always win when present.
+ */
+export function enrichWorkout(workout: LoggedWorkout, activity: StravaActivity): LoggedWorkout {
+  const avgHeartRate = workout.heartRate?.avg ?? activity.avgHeartRate;
+  const maxHeartRate = workout.heartRate?.max ?? activity.maxHeartRate;
+
+  const heartRate: HeartRateData | undefined =
+    avgHeartRate !== undefined ? { avg: avgHeartRate, max: maxHeartRate } : undefined;
+
+  return {
+    ...workout,
+    exercises: workout.exercises.map((exercise) => ({
+      ...exercise,
+      muscleGroups: [...exercise.muscleGroups],
+    })),
+    heartRate,
+    durationMinutes: workout.durationMinutes ?? activity.durationMinutes,
+    stravaData: {
+      activityId: activity.activityId,
+      durationMinutes: activity.durationMinutes,
+      avgHeartRate: activity.avgHeartRate,
+      maxHeartRate: activity.maxHeartRate,
+      calories: activity.calories,
+      distanceKm: activity.distanceKm,
+    },
+    enrichmentStatus: "enriched",
   };
 }
 
