@@ -11,9 +11,11 @@ import {
   getSplitSlots,
   getWeeklyWorkload,
   MESOCYCLE_LENGTH_OPTIONS,
+  PROGRAM_PRESETS,
   REP_PROGRESSION_OPTIONS,
   RPE_PROGRESSION_OPTIONS,
   SPLIT_DEFINITIONS,
+  type ProgramPreset,
   type ProgressionSettings,
   type SplitType,
   type WeeklyCycle,
@@ -32,7 +34,7 @@ const defaultProgression: ProgressionSettings = {
 };
 
 export function CreatePlanWizard() {
-  const { isWizardOpen, closeWizard, createProgram } = useProgram();
+  const { isWizardOpen, closeWizard, createProgram, createPresetProgram } = useProgram();
 
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
@@ -98,6 +100,11 @@ export function CreatePlanWizard() {
     reset();
   };
 
+  const startFromPreset = (preset: ProgramPreset) => {
+    createPresetProgram(preset, name);
+    reset();
+  };
+
   const footer = (
     <div className="flex items-center justify-between gap-3">
       {step > 1 ? (
@@ -156,6 +163,49 @@ export function CreatePlanWizard() {
                 {example}
               </button>
             ))}
+          </div>
+
+          <div className="mt-8">
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-zinc-200 dark:bg-white/10" />
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                or start from a template
+              </span>
+              <div className="h-px flex-1 bg-zinc-200 dark:bg-white/10" />
+            </div>
+            <div className="mt-4 grid gap-3">
+              {PROGRAM_PRESETS.map((preset) => {
+                const totalWeeks = preset.blocks.reduce((sum, block) => sum + block.lengthWeeks, 0);
+                return (
+                  <div
+                    key={preset.id}
+                    className="rounded-3xl border border-zinc-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-base font-bold">{preset.name}</h4>
+                      <Badge tone="lime">{totalWeeks} weeks</Badge>
+                      {preset.blocks.map((block) => (
+                        <Badge key={block.name} tone="zinc">
+                          {block.name}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{preset.description}</p>
+                    <Button
+                      type="button"
+                      className="mt-4 w-full sm:w-auto"
+                      onClick={() => startFromPreset(preset)}
+                    >
+                      <Dumbbell className="h-4 w-4" /> Use this template
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-xs text-zinc-400">
+              Templates are a starting point. After creating, edit any exercise, set, rep, or substitution -
+              your changes stay on this device and never alter the template.
+            </p>
           </div>
         </StepContainer>
       )}

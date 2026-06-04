@@ -1,7 +1,8 @@
 "use client";
 
-import { CalendarDays, ChevronRight, Dumbbell, Moon, RotateCcw } from "lucide-react";
+import { CalendarDays, ChevronRight, Dumbbell, Moon, Pencil, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import { LogWorkoutModal } from "@/components/log-workout-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,13 @@ import {
 } from "@/lib/program";
 import { useProgram } from "@/program-context";
 import { cn } from "@/lib/utils";
+
+interface EditTarget {
+  weekNumber: number;
+  dayOfWeek: DayOfWeek;
+  workoutType: string;
+  workout: LoggedWorkout | null;
+}
 
 // JS getDay(): 0 = Sunday .. 6 = Saturday.
 const JS_DAY_TO_DAY_OF_WEEK: DayOfWeek[] = [
@@ -32,11 +40,12 @@ function getTodayDayOfWeek(): DayOfWeek {
 }
 
 export function ActiveMesocycleView({ program }: { program: Program }) {
-  const { advanceWeek, resetProgram } = useProgram();
+  const { advanceWeek, resetProgram, updateMesocycleWorkout } = useProgram();
   const definition = getSplitDefinition(program.splitType);
   const mesocycle = program.mesocycle;
 
   const [selectedWeek, setSelectedWeek] = useState(mesocycle?.currentWeek ?? 1);
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
 
   if (!mesocycle) {
     return null;
@@ -116,11 +125,30 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
                   {todaysType ? ` - ${todaysType} Day` : ""}
                 </CardDescription>
               </div>
-              {todaysWorkout ? (
-                <Dumbbell className="h-6 w-6 text-lime-300" />
-              ) : (
-                <Moon className="h-6 w-6 text-zinc-400" />
-              )}
+              <div className="flex items-center gap-2">
+                {todaysWorkout && todaysType && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      setEditTarget({
+                        weekNumber: currentWeek,
+                        dayOfWeek: today,
+                        workoutType: todaysType,
+                        workout: todaysWorkout,
+                      })
+                    }
+                  >
+                    <Pencil className="h-4 w-4" /> Edit
+                  </Button>
+                )}
+                {todaysWorkout ? (
+                  <Dumbbell className="h-6 w-6 text-lime-300" />
+                ) : (
+                  <Moon className="h-6 w-6 text-zinc-400" />
+                )}
+              </div>
             </div>
           </CardHeader>
           {todaysWorkout ? (
@@ -151,16 +179,29 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
                     size="sm"
                     variant={week.weekNumber === selectedWeek ? "default" : "secondary"}
                     onClick={() => setSelectedWeek(week.weekNumber)}
+                    title={
+                      [week.blockName, week.isDeload ? "Deload" : null].filter(Boolean).join(" - ") ||
+                      undefined
+                    }
                   >
                     Week {week.weekNumber}
                     {week.isBaseline ? " *" : ""}
+                    {week.isDeload ? " ↓" : ""}
                   </Button>
                 ))}
               </div>
             </div>
           </CardHeader>
 
-          {activeWeek.isBaseline && (
+          {(activeWeek.blockName || activeWeek.isBaseline || activeWeek.isDeload) && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {activeWeek.blockName && <Badge tone="zinc">{activeWeek.blockName}</Badge>}
+              {activeWeek.isBaseline && <Badge tone="lime">Baseline week</Badge>}
+              {activeWeek.isDeload && <Badge tone="amber">Deload - train lighter, cap RPE</Badge>}
+            </div>
+          )}
+
+          {activeWeek.isBaseline && !activeWeek.blockName && (
             <div className="mb-4 flex items-center gap-2 rounded-2xl border border-lime-300/40 bg-lime-300/10 px-4 py-2 text-sm text-zinc-600 dark:text-zinc-300">
               <CalendarDays className="h-4 w-4 text-lime-500" />
               Baseline week - the source of truth for the whole mesocycle.
@@ -182,12 +223,33 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
                         : "border-zinc-200 bg-zinc-100 dark:border-white/10 dark:bg-black/20",
                     )}
                   >
-                    <h3 className="font-bold">
-                      {day.dayOfWeek} - {day.workoutType} Day
-                    </h3>
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {day.workout?.exercises.length ?? 0} exercises
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-bold">
+                          {day.dayOfWeek} - {day.workoutType} Day
+                        </h3>
+                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                          {day.workout?.exercises.length ?? 0} exercises
+                        </p>
+                      </div>
+                      {day.workoutType && (
+                        <button
+                          type="button"
+                          aria-label={`Edit ${day.dayOfWeek} workout`}
+                          onClick={() =>
+                            setEditTarget({
+                              weekNumber: activeWeek.weekNumber,
+                              dayOfWeek: day.dayOfWeek,
+                              workoutType: day.workoutType as string,
+                              workout: day.workout,
+                            })
+                          }
+                          className="shrink-0 rounded-full p-2 text-zinc-400 transition hover:bg-zinc-950/10 dark:hover:bg-white/10"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                     {day.workout && <WorkoutExerciseGrid workout={day.workout} compact />}
                   </div>
                 );
@@ -201,6 +263,18 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
           <RotateCcw className="h-4 w-4" /> End program
         </Button>
       </section>
+
+      {editTarget && (
+        <LogWorkoutModal
+          open
+          onClose={() => setEditTarget(null)}
+          dayOfWeek={editTarget.dayOfWeek}
+          workoutType={editTarget.workoutType}
+          existing={editTarget.workout ?? undefined}
+          substitutionMemory={program.substitutionMemory}
+          onSave={(workout) => updateMesocycleWorkout(editTarget.weekNumber, workout)}
+        />
+      )}
     </div>
   );
 }

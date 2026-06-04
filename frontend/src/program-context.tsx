@@ -11,6 +11,7 @@ import {
 } from "react";
 import {
   createProgram as createProgramRecord,
+  createProgramFromPreset,
   enrichWorkout,
   generateMesocycle as generateMesocycleRecord,
   getScheduledSessions,
@@ -18,6 +19,7 @@ import {
   type DayOfWeek,
   type LoggedWorkout,
   type Program,
+  type ProgramPreset,
   type ProgressionSettings,
   type SplitType,
   type StravaActivity,
@@ -44,6 +46,8 @@ interface ProgramContextValue {
   openWizard: () => void;
   closeWizard: () => void;
   createProgram: (input: CreateProgramInput) => void;
+  createPresetProgram: (preset: ProgramPreset, name?: string) => void;
+  updateMesocycleWorkout: (weekNumber: number, workout: LoggedWorkout) => void;
   logWorkout: (workout: LoggedWorkout) => void;
   removeLoggedWorkout: (dayOfWeek: DayOfWeek) => void;
   generateMesocycle: () => void;
@@ -121,6 +125,52 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   const createProgram = useCallback((input: CreateProgramInput) => {
     setActiveProgram(createProgramRecord(input));
     setIsWizardOpen(false);
+  }, []);
+
+  const createPresetProgram = useCallback((preset: ProgramPreset, name?: string) => {
+    setActiveProgram(createProgramFromPreset(preset, name));
+    setIsWizardOpen(false);
+  }, []);
+
+  // Inline-edit a single day within the generated mesocycle. Edits live only on
+  // this program (persisted locally) and never touch the shared templates. When
+  // editing a block's baseline week we also sync that block's baseline so the
+  // change stays the source of truth for that block.
+  const updateMesocycleWorkout = useCallback((weekNumber: number, workout: LoggedWorkout) => {
+    setActiveProgram((current) => {
+      if (!current || !current.mesocycle) {
+        return current;
+      }
+      const editedWeek = current.mesocycle.weeks.find((week) => week.weekNumber === weekNumber);
+      const weeks = current.mesocycle.weeks.map((week) =>
+        week.weekNumber === weekNumber
+          ? {
+              ...week,
+              days: week.days.map((day) =>
+                day.dayOfWeek === workout.dayOfWeek
+                  ? { ...day, workoutType: workout.workoutType, workout }
+                  : day,
+              ),
+            }
+          : week,
+      );
+
+      let blocks = current.blocks;
+      if (blocks && editedWeek?.isBaseline && editedWeek.blockName) {
+        blocks = blocks.map((block) =>
+          block.name === editedWeek.blockName
+            ? {
+                ...block,
+                baselineWorkouts: block.baselineWorkouts.map((existing) =>
+                  existing.dayOfWeek === workout.dayOfWeek ? workout : existing,
+                ),
+              }
+            : block,
+        );
+      }
+
+      return { ...current, blocks, mesocycle: { ...current.mesocycle, weeks } };
+    });
   }, []);
 
   const logWorkout = useCallback((workout: LoggedWorkout) => {
@@ -268,6 +318,8 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       openWizard,
       closeWizard,
       createProgram,
+      createPresetProgram,
+      updateMesocycleWorkout,
       logWorkout,
       removeLoggedWorkout,
       generateMesocycle,
@@ -287,6 +339,8 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       openWizard,
       closeWizard,
       createProgram,
+      createPresetProgram,
+      updateMesocycleWorkout,
       logWorkout,
       removeLoggedWorkout,
       generateMesocycle,
