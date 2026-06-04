@@ -6,7 +6,13 @@ namespace Training.Domain.Entities;
 public sealed record ExerciseTemplate(
     Guid Id,
     string ExerciseName,
+    string? WarmupSets,
     int TargetSets,
     RepRange TargetRepRange,
+    string? EarlySetRpe,
+    string? LastSetRpe,
+    string? RestTime,
+    string? LastSetIntensityTechnique,
     string? Notes,
-    ExerciseCategory Category);
+    ExerciseCategory Category,
+    IReadOnlyList<ExerciseTemplateSubstitution> Substitutions);

@@ -23,15 +23,23 @@ public sealed record AddWorkoutTemplateRequest(
     Guid WeeklyPlanId,
     string Name,
     DayOfWeek DayOfWeek,
-    IReadOnlyList<ExerciseTemplateRequest> Exercises);
+    IReadOnlyList<ExerciseTemplateRequest> Exercises,
+    string? WorkoutType,
+    string? Description);
 
 public sealed record ExerciseTemplateRequest(
     string ExerciseName,
+    string? WarmupSets,
     int TargetSets,
     int TargetRepMin,
     int TargetRepMax,
+    string? EarlySetRpe,
+    string? LastSetRpe,
+    string? RestTime,
+    string? LastSetIntensityTechnique,
     string? Notes,
-    ExerciseCategory Category);
+    ExerciseCategory Category,
+    IReadOnlyList<string>? Substitutions);
 
 public sealed record RecordWorkoutExecutionRequest(
     Guid AthleteId,
@@ -87,16 +95,28 @@ public sealed record WorkoutTemplateResponse(
     Guid Id,
     string Name,
     DayOfWeek DayOfWeek,
-    IReadOnlyList<ExerciseTemplateResponse> Exercises);
+    IReadOnlyList<ExerciseTemplateResponse> Exercises,
+    string? WorkoutType,
+    string? Description);
 
 public sealed record ExerciseTemplateResponse(
     Guid Id,
     string ExerciseName,
+    string? WarmupSets,
     int TargetSets,
     int TargetRepMin,
     int TargetRepMax,
+    string? EarlySetRpe,
+    string? LastSetRpe,
+    string? RestTime,
+    string? LastSetIntensityTechnique,
     string? Notes,
-    ExerciseCategory Category);
+    ExerciseCategory Category,
+    IReadOnlyList<ExerciseTemplateSubstitutionResponse> Substitutions);
+
+public sealed record ExerciseTemplateSubstitutionResponse(
+    Guid Id,
+    string ExerciseName);
 
 public sealed record WorkoutForDayResponse(
     DateOnly Date,
@@ -177,12 +197,20 @@ public static class TrainingProgramContractMapper
             request.Exercises
                 .Select(exercise => new ExerciseTemplateInput(
                     exercise.ExerciseName,
+                    exercise.WarmupSets,
                     exercise.TargetSets,
                     exercise.TargetRepMin,
                     exercise.TargetRepMax,
+                    exercise.EarlySetRpe,
+                    exercise.LastSetRpe,
+                    exercise.RestTime,
+                    exercise.LastSetIntensityTechnique,
                     exercise.Notes,
-                    exercise.Category))
-                .ToList());
+                    exercise.Category,
+                    exercise.Substitutions))
+                .ToList(),
+            request.WorkoutType,
+            request.Description);
     }
 
     public static RecordWorkoutExecutionCommand ToCommand(RecordWorkoutExecutionRequest request)
@@ -256,7 +284,9 @@ public static class TrainingProgramContractMapper
             workoutTemplate.Id,
             workoutTemplate.Name,
             workoutTemplate.DayOfWeek,
-            workoutTemplate.Exercises.Select(ToResponse).ToList());
+            workoutTemplate.Exercises.Select(ToResponse).ToList(),
+            workoutTemplate.WorkoutType,
+            workoutTemplate.Description);
     }
 
     public static ExerciseTemplateResponse ToResponse(ExerciseTemplate exercise)
@@ -264,11 +294,22 @@ public static class TrainingProgramContractMapper
         return new ExerciseTemplateResponse(
             exercise.Id,
             exercise.ExerciseName,
+            exercise.WarmupSets,
             exercise.TargetSets,
             exercise.TargetRepRange.Min,
             exercise.TargetRepRange.Max,
+            exercise.EarlySetRpe,
+            exercise.LastSetRpe,
+            exercise.RestTime,
+            exercise.LastSetIntensityTechnique,
             exercise.Notes,
-            exercise.Category);
+            exercise.Category,
+            exercise.Substitutions.Select(ToResponse).ToList());
+    }
+
+    public static ExerciseTemplateSubstitutionResponse ToResponse(ExerciseTemplateSubstitution substitution)
+    {
+        return new ExerciseTemplateSubstitutionResponse(substitution.Id, substitution.ExerciseName);
     }
 
     public static WorkoutExecutionResponse ToResponse(WorkoutExecution execution)

@@ -167,7 +167,7 @@ export function BaselineWeekView({ program }: { program: Program }) {
                         </p>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           {logged
-                            ? `Complete - ${logged.exercises.length} exercise${
+                            ? `${logged.templateName ?? "Complete"} - ${logged.exercises.length} exercise${
                                 logged.exercises.length === 1 ? "" : "s"
                               }`
                             : "Pending"}
@@ -261,6 +261,7 @@ export function BaselineWeekView({ program }: { program: Program }) {
           workoutType={activeSession.workoutType}
           existing={activeSession.existing}
           onSave={logWorkout}
+          substitutionMemory={program.substitutionMemory}
         />
       )}
 

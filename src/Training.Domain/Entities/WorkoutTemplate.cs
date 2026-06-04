@@ -4,4 +4,6 @@ public sealed record WorkoutTemplate(
     Guid Id,
     string Name,
     DayOfWeek DayOfWeek,
-    IReadOnlyList<ExerciseTemplate> Exercises);
+    IReadOnlyList<ExerciseTemplate> Exercises,
+    string? WorkoutType,
+    string? Description);

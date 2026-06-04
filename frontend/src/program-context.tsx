@@ -14,6 +14,7 @@ import {
   enrichWorkout,
   generateMesocycle as generateMesocycleRecord,
   getScheduledSessions,
+  rememberWorkoutSubstitutions,
   type DayOfWeek,
   type LoggedWorkout,
   type Program,
@@ -83,7 +84,10 @@ function loadProgram(): Program | null {
       window.localStorage.removeItem(STORAGE_KEY);
       return null;
     }
-    return parsed as Program;
+    return {
+      ...(parsed as Program),
+      substitutionMemory: parsed.substitutionMemory ?? {},
+    };
   } catch {
     return null;
   }
@@ -135,6 +139,7 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       );
       return {
         ...current,
+        substitutionMemory: rememberWorkoutSubstitutions(current.substitutionMemory ?? {}, workout),
         baselineWeek: {
           ...current.baselineWeek,
           loggedWorkouts: [...others, workout],
