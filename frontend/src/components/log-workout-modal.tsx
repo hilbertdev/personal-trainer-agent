@@ -8,6 +8,7 @@ import {
   buildQuickFillWorkout,
   createEmptyLoggedExercise,
   createId,
+  hasDefaultTemplate,
   type DayOfWeek,
   type ExerciseSubstitutionOption,
   type LoggedExercise,
@@ -246,7 +247,9 @@ export function LogWorkoutModal({
       <div className="mb-4 flex justify-end">
         <Button type="button" variant="secondary" size="sm" onClick={quickFill}>
           <Sparkles className="h-4 w-4" />{" "}
-          {workoutType === "Upper" ? "Quick-fill Upper #1 template" : "Quick-fill from sample"}
+          {hasDefaultTemplate(workoutType)
+            ? `Quick-fill ${workoutType} template`
+            : "Quick-fill from sample"}
         </Button>
       </div>
 

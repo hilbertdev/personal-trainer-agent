@@ -199,8 +199,11 @@ export const SPLIT_DEFINITIONS: Record<SplitType, SplitDefinition> = {
     type: "UPPER_LOWER",
     label: "Upper / Lower",
     slots: [
-      { slot: "Upper", muscleGroups: ["Chest", "Back", "Shoulders", "Arms"] },
-      { slot: "Lower", muscleGroups: ["Quads", "Hamstrings", "Glutes", "Calves"] },
+      { slot: "Upper #1", muscleGroups: ["Chest", "Back", "Shoulders", "Arms"] },
+      { slot: "Lower #1", muscleGroups: ["Quads", "Hamstrings", "Glutes", "Calves"] },
+      { slot: "Upper #2", muscleGroups: ["Chest", "Back", "Shoulders", "Arms"] },
+      { slot: "Lower #2", muscleGroups: ["Quads", "Hamstrings", "Glutes", "Calves"] },
+      { slot: "Arms & Weak Points", muscleGroups: ["Arms", "Core"] },
     ],
   },
 };
@@ -359,6 +362,521 @@ const DEFAULT_UPPER_1_EXERCISES: LoggedExercise[] = [
   },
 ];
 
+export const LOWER_1_TEMPLATE_NAME = "Lower #1 - Jeff Nippard Pure Bodybuilding";
+export const LOWER_1_TEMPLATE_WEEK = "Week 2 (Baseline Template)";
+export const LOWER_1_TEMPLATE_DESCRIPTION =
+  "A hypertrophy-focused lower body workout emphasizing hamstrings, adductors, quads, and calves. Includes exercise-specific intensity techniques, RPE targets, rep ranges, rest periods, coaching cues, and recommended substitutions.";
+
+const DEFAULT_LOWER_1_EXERCISES: LoggedExercise[] = [
+  {
+    name: "Seated Leg Curl",
+    originalName: "Seated Leg Curl",
+    warmupSets: "1-2",
+    sets: 3,
+    repRangeMin: 8,
+    repRangeMax: 10,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "10",
+    restTime: "2-3 minutes",
+    notes: "Lean forward over the machine to get a maximum stretch in your hamstrings.",
+    substitutions: templateSubstitutions(["Lying Leg Curl", "Nordic Ham Curl"]),
+    muscleGroups: ["Hamstrings"],
+  },
+  {
+    name: "Machine Hip Adduction",
+    originalName: "Machine Hip Adduction",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    notes:
+      "Mind-muscle connection with your inner thighs. These are great for adding thigh mass from the front! Push them hard!",
+    substitutions: templateSubstitutions(["Cable Hip Adduction", "Copenhagen Hip Adduction"]),
+    muscleGroups: ["Adductors"],
+  },
+  {
+    name: "Hack Squat",
+    originalName: "Hack Squat",
+    warmupSets: "2-4",
+    sets: 3,
+    repRangeMin: 4,
+    repRangeMax: 8,
+    weight: 0,
+    rpe: 9,
+    earlySetRpe: "9",
+    lastSetRpe: "9",
+    restTime: "3-5 minutes",
+    notes:
+      "We're using a reverse pyramid on this exercise. Warm-up as usual to your first working set for 4 reps. This first set will be your heaviest set. Then for set 2, drop the weight back ~10-15% and do 6 reps. Then for set 3, drop the weight back another 10-15% and do 8 reps.",
+    substitutions: templateSubstitutions(["Machine Squat", "Front Squat"]),
+    muscleGroups: ["Quads", "Glutes"],
+  },
+  {
+    name: "Leg Extension",
+    originalName: "Leg Extension",
+    warmupSets: "1-2",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Long-length partials on all reps of the last set.",
+    notes:
+      "Set the seat back as far as it will go while still feeling comfortable. Grab the handles as hard as you can to pull your butt down into the seat. Use a 2-3 second negative. Feel your quads pulling apart on the negative.",
+    substitutions: templateSubstitutions(["DB Step-Up", "Reverse Nordic"]),
+    muscleGroups: ["Quads"],
+  },
+  {
+    name: "Leg Press Calf Press",
+    originalName: "Leg Press Calf Press",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 12,
+    repRangeMax: 15,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Calf Static Stretch (30 sec)",
+    notes:
+      "1-2 second pause at the bottom of each rep. Instead of just going up onto your toes, think about rolling your ankle back and forth on the balls of your feet.",
+    substitutions: templateSubstitutions(["Donkey Calf Raise", "Seated Calf Raise"]),
+    muscleGroups: ["Calves"],
+  },
+];
+
+export const UPPER_2_TEMPLATE_NAME = "Upper #2 - Jeff Nippard Pure Bodybuilding";
+export const UPPER_2_TEMPLATE_WEEK = "Week 2 (Baseline Template)";
+export const UPPER_2_TEMPLATE_DESCRIPTION =
+  "A hypertrophy-focused upper body workout emphasizing back thickness, chest, rear delts, lateral delts, and arms. Includes exercise-specific intensity techniques, RPE targets, rep ranges, rest periods, coaching cues, and recommended substitutions.";
+
+const DEFAULT_UPPER_2_EXERCISES: LoggedExercise[] = [
+  {
+    name: "Super-ROM Overhead Cable Row",
+    originalName: "Super-ROM Overhead Cable Row",
+    warmupSets: "1-2",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    notes:
+      "Set up a wide-grip pulldown bar on a seated cable row. Using a double overhand grip, perform rows while leaning forward on the negative and extend your torso to be upright as you finish the row.",
+    substitutions: templateSubstitutions(["Overhead Machine Row", "Arm-Out Single-Arm DB Row"]),
+    muscleGroups: ["Back"],
+  },
+  {
+    name: "Machine Shoulder Press",
+    originalName: "Machine Shoulder Press",
+    warmupSets: "2-3",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Dropset",
+    notes:
+      "Ensure that your elbows break at least 90 degrees. Mind-muscle connection with your delts. Smooth, controlled reps.",
+    substitutions: templateSubstitutions(["Cable Shoulder Press", "Seated DB Shoulder Press"]),
+    muscleGroups: ["Shoulders", "Triceps"],
+  },
+  {
+    name: "Assisted Pull-Up",
+    originalName: "Assisted Pull-Up",
+    warmupSets: "1-2",
+    sets: 3,
+    repRangeMin: 8,
+    repRangeMax: 10,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "10",
+    restTime: "2-3 minutes",
+    lastSetIntensityTechnique: "Long-length partials on all reps of the last set.",
+    notes:
+      "Slow 2-3 second negative. Feel your lats pulling apart on the way down. Slight 0.5-1 second pause at the bottom, then lift your chest up and drive your elbows down as you pull yourself up. Don't be afraid to use assistance. Keep the form tight and controlled.",
+    substitutions: templateSubstitutions(["Lat Pulldown", "Machine Pulldown"]),
+    muscleGroups: ["Back", "Biceps"],
+  },
+  {
+    name: "Paused Assisted Dip",
+    originalName: "Paused Assisted Dip",
+    warmupSets: "2",
+    sets: 3,
+    repRangeMin: 8,
+    repRangeMax: 10,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "8-9",
+    lastSetRpe: "10",
+    restTime: "3-5 minutes",
+    notes:
+      "Slow 2-3 second negative. 1-2 second pause at the bottom. Explode with control on the way up. Go as deep as your shoulders comfortably allow, trying to at least break a 90 degree elbow angle.",
+    substitutions: templateSubstitutions(["Decline Machine Chest Press", "Decline Barbell Press"]),
+    muscleGroups: ["Chest", "Triceps", "Shoulders"],
+  },
+  {
+    name: "Inverse DB Zottman Curl",
+    originalName: "Inverse DB Zottman Curl",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    notes:
+      "Do a hammer curl on the positive, then turn your palms facing up at the top and use a palms-up grip on the negative.",
+    substitutions: templateSubstitutions(["Slow-Eccentric DB Curl", "Hammer Curl"]),
+    muscleGroups: ["Biceps"],
+  },
+  {
+    name: "Super ROM DB Lateral Raise",
+    originalName: "Super ROM DB Lateral Raise",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 13,
+    repRangeMax: 15,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "0.5-1 minute",
+    notes:
+      "Perform lateral raises as normal, except going until your hands are up overhead. As you break parallel, you will use more upper traps to move the weight. Feel free to squeeze your upper traps at the top. If you feel shoulder pain when going all the way up, try pointing your thumb up or simply stop at parallel and do normal lateral raises.",
+    substitutions: templateSubstitutions(["Cable Upright Row", "DB Lateral Raise"]),
+    muscleGroups: ["Shoulders"],
+  },
+  {
+    name: "Cable Reverse Flye (Mechanical Dropset)",
+    originalName: "Cable Reverse Flye (Mechanical Dropset)",
+    warmupSets: "0",
+    sets: 3,
+    repRangeMin: 3,
+    repRangeMax: 5,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Mechanical Dropset (on all sets)",
+    notes:
+      "You'll probably want to watch the video for this one. Take ~3 big steps back from the cable machine and do your first 5 reps. After these first 5 reps, immediately (without resting) take 1 step forward and do another 4 reps. Then (without resting) take another step forward and do at least another 3 reps (or until you hit RPE 9-10).",
+    substitutions: templateSubstitutions(["Reverse Pec Deck", "Bent-Over Reverse DB Flye"]),
+    muscleGroups: ["Shoulders", "Back"],
+  },
+];
+
+export const LOWER_2_TEMPLATE_NAME = "Lower #2 - Jeff Nippard Pure Bodybuilding";
+export const LOWER_2_TEMPLATE_WEEK = "Week 2 (Baseline Template)";
+export const LOWER_2_TEMPLATE_DESCRIPTION =
+  "A hypertrophy-focused lower body workout emphasizing hamstrings, quads, glutes, adductors, and calves. Includes exercise-specific intensity techniques, RPE targets, rep ranges, rest periods, coaching cues, and recommended substitutions.";
+
+const DEFAULT_LOWER_2_EXERCISES: LoggedExercise[] = [
+  {
+    name: "Lying Leg Curl",
+    originalName: "Lying Leg Curl",
+    warmupSets: "1-2",
+    sets: 3,
+    repRangeMin: 8,
+    repRangeMax: 10,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Long-length partials on all reps of the last set.",
+    notes:
+      "Set the machine so that you get the biggest stretch possible at the bottom. Prevent your butt from popping up as you curl. Once you can't get to the full squeeze, continue with partial reps on the last set.",
+    substitutions: templateSubstitutions(["Seated Leg Curl", "Nordic Ham Curl"]),
+    muscleGroups: ["Hamstrings"],
+  },
+  {
+    name: "Leg Press",
+    originalName: "Leg Press",
+    warmupSets: "3-4",
+    sets: 3,
+    repRangeMin: 8,
+    repRangeMax: 8,
+    weight: 0,
+    rpe: 9,
+    earlySetRpe: "8-9",
+    lastSetRpe: "8-9",
+    restTime: "1-2 minutes",
+    notes:
+      "Feet lower on the platform for more quad focus. Get as deep as you can without excessive back rounding. Control the negative and do a slight pause at the bottom of each rep. Try to add a little weight each week at the same rep count.",
+    substitutions: templateSubstitutions(["Belt Squat", "High-Bar Back Squat"]),
+    muscleGroups: ["Quads", "Glutes"],
+  },
+  {
+    name: "Paused Barbell RDL",
+    originalName: "Paused Barbell RDL",
+    warmupSets: "2-3",
+    sets: 2,
+    repRangeMin: 8,
+    repRangeMax: 8,
+    weight: 0,
+    rpe: 8,
+    earlySetRpe: "6-7",
+    lastSetRpe: "7-8",
+    restTime: "3-4 minutes",
+    notes:
+      "The RPE is intentionally low here because these will cause a lot of muscle damage. Don't be tempted to go too heavy. 1 second pause at the bottom of each rep. To keep tension on the hamstrings, stop about 75% of the way to full lockout on each rep (i.e. stay in the bottom 3/4 of the range of motion).",
+    substitutions: templateSubstitutions(["Paused DB RDL", "Glute Ham Raise"]),
+    muscleGroups: ["Hamstrings", "Glutes", "Back"],
+  },
+  {
+    name: "A1: Machine Hip Adduction",
+    originalName: "A1: Machine Hip Adduction",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "0.5-1 minute",
+    notes:
+      "Mind-muscle connection with your inner thighs. These are great for adding thigh mass from the front! Push them hard!",
+    substitutions: templateSubstitutions(["Cable Hip Adduction", "Copenhagen Hip Adduction"]),
+    muscleGroups: ["Adductors"],
+  },
+  {
+    name: "A2: Sissy Squat",
+    originalName: "A2: Sissy Squat",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 8,
+    earlySetRpe: "7-8",
+    lastSetRpe: "7-8",
+    restTime: "0.5-1 minute",
+    notes:
+      "Allow yourself to come up onto your toes and push your knees forward past your toes. This is safe for the knees. If you feel knee pain doing them, though, feel free to go with a substitution. They may feel awkward at first, but they're really underrated for the quads! Don't give up on them too quickly.",
+    substitutions: templateSubstitutions(["Leg Extension", "Goblet Squat"]),
+    muscleGroups: ["Quads"],
+  },
+  {
+    name: "Standing Calf Raise",
+    originalName: "Standing Calf Raise",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Calf Static Stretch (30 sec held)",
+    notes:
+      "1-2 second pause at the bottom of each rep. Instead of just going up onto your toes, think about rolling your ankle back and forth on the balls of your feet.",
+    substitutions: templateSubstitutions(["Leg Press Calf Press", "Donkey Calf Raise"]),
+    muscleGroups: ["Calves"],
+  },
+];
+
+export const ARMS_WEAK_POINTS_TEMPLATE_NAME = "Arms & Weak Points - Jeff Nippard Pure Bodybuilding";
+export const ARMS_WEAK_POINTS_TEMPLATE_WEEK = "Week 2 (Baseline Template)";
+export const ARMS_WEAK_POINTS_TEMPLATE_DESCRIPTION =
+  "An arm-focused session with dedicated weak-point work. Pick weak-point exercises from your Hypertrophy Handbook, then train biceps, triceps, and core. Includes exercise-specific intensity techniques, RPE targets, rep ranges, rest periods, coaching cues, and recommended substitutions.";
+
+const DEFAULT_ARMS_WEAK_POINTS_EXERCISES: LoggedExercise[] = [
+  {
+    name: "Weak Point Exercise 1",
+    originalName: "Weak Point Exercise 1",
+    warmupSets: "1-3",
+    sets: 3,
+    repRangeMin: 8,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "9-10",
+    restTime: "1-3 minutes",
+    notes:
+      "Decide on your weak point using The Weak Point Table in your Hypertrophy Handbook. Perform ONE of the exercises listed under Exercise 1 for the sets and reps provided here.",
+    substitutions: templateSubstitutions(["See The Weak Point Table for sub options"]),
+    muscleGroups: [],
+  },
+  {
+    name: "Weak Point Exercise 2 (optional)",
+    originalName: "Weak Point Exercise 2 (optional)",
+    warmupSets: "1-3",
+    sets: 2,
+    repRangeMin: 6,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9",
+    lastSetRpe: "9-10",
+    restTime: "1-3 minutes",
+    notes:
+      "If your weak point is feeling recovered (not sore or fatigued) then feel free to hit Exercise 2. If your weak point is feeling tired or sore, do not perform the second weak point exercise this week.",
+    substitutions: templateSubstitutions(["See The Weak Point Table for sub options"]),
+    muscleGroups: [],
+  },
+  {
+    name: "Bayesian Cable Curl",
+    originalName: "Bayesian Cable Curl",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    lastSetIntensityTechnique: "Long-length partials on all reps of the last set.",
+    notes:
+      "If you have a left-right bicep size imbalance, do these 1 arm at a time, starting with the weaker arm. Take the weaker arm to an RPE of 9-10. Then match the reps with the other arm (stop once you've matched the reps, even if the RPE is lower). If you don't have a size imbalance, do these both arms at the same time.",
+    substitutions: templateSubstitutions(["DB Incline Curl", "DB Spider Curl"]),
+    muscleGroups: ["Biceps"],
+  },
+  {
+    name: "Seated DB French Press",
+    originalName: "Seated DB French Press",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 10,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    notes:
+      "Place both palms under the head of a dumbbell and perform overhead extensions. Feel a deep stretch on your triceps at the bottom. Avoid pausing at the top of each rep.",
+    substitutions: templateSubstitutions(["EZ-bar Skull Crusher", "DB Skull Crusher"]),
+    muscleGroups: ["Triceps"],
+  },
+  {
+    name: "Bottom 2/3 Constant Tension Preacher Curl",
+    originalName: "Bottom 2/3 Constant Tension Preacher Curl",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 13,
+    repRangeMax: 15,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    notes:
+      "Stay in the bottom 2/3 of the curl. Don't squeeze all the way up to the top. Keep your triceps firmly pinned against the pad as you curl. No pausing at the top or bottom; constant tension on the biceps!",
+    substitutions: templateSubstitutions(["Bottom-2/3 EZ-Bar Curl", "Spider Curl"]),
+    muscleGroups: ["Biceps"],
+  },
+  {
+    name: "Cable Triceps Kickback",
+    originalName: "Cable Triceps Kickback",
+    warmupSets: "0",
+    sets: 3,
+    repRangeMin: 13,
+    repRangeMax: 15,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    notes:
+      "There are two ways you can do this: upright or bent over. Choose the one that feels more comfortable for you. The main thing is that when you're in that full squeeze, your shoulder should be positioned back behind your torso.",
+    substitutions: templateSubstitutions(["Bench Dip", "DB Triceps Kickback"]),
+    muscleGroups: ["Triceps"],
+  },
+  {
+    name: "Cable Crunch",
+    originalName: "Cable Crunch",
+    warmupSets: "1",
+    sets: 3,
+    repRangeMin: 10,
+    repRangeMax: 12,
+    weight: 0,
+    rpe: 10,
+    earlySetRpe: "9-10",
+    lastSetRpe: "10",
+    restTime: "1-2 minutes",
+    notes:
+      "Round your lower back as you crunch. Maintain a mind-muscle connection with your 6-pack.",
+    substitutions: templateSubstitutions(["Machine Crunch", "Plate-Weighted Crunch"]),
+    muscleGroups: ["Core"],
+  },
+];
+
+interface DefaultWorkoutTemplate {
+  name: string;
+  week: string;
+  description: string;
+  exercises: LoggedExercise[];
+}
+
+const UPPER_1_TEMPLATE: DefaultWorkoutTemplate = {
+  name: UPPER_1_TEMPLATE_NAME,
+  week: UPPER_1_TEMPLATE_WEEK,
+  description: UPPER_1_TEMPLATE_DESCRIPTION,
+  exercises: DEFAULT_UPPER_1_EXERCISES,
+};
+
+const LOWER_1_TEMPLATE: DefaultWorkoutTemplate = {
+  name: LOWER_1_TEMPLATE_NAME,
+  week: LOWER_1_TEMPLATE_WEEK,
+  description: LOWER_1_TEMPLATE_DESCRIPTION,
+  exercises: DEFAULT_LOWER_1_EXERCISES,
+};
+
+const DEFAULT_WORKOUT_TEMPLATES: Record<string, DefaultWorkoutTemplate> = {
+  "Upper #1": UPPER_1_TEMPLATE,
+  "Lower #1": LOWER_1_TEMPLATE,
+  "Upper #2": {
+    name: UPPER_2_TEMPLATE_NAME,
+    week: UPPER_2_TEMPLATE_WEEK,
+    description: UPPER_2_TEMPLATE_DESCRIPTION,
+    exercises: DEFAULT_UPPER_2_EXERCISES,
+  },
+  "Lower #2": {
+    name: LOWER_2_TEMPLATE_NAME,
+    week: LOWER_2_TEMPLATE_WEEK,
+    description: LOWER_2_TEMPLATE_DESCRIPTION,
+    exercises: DEFAULT_LOWER_2_EXERCISES,
+  },
+  "Arms & Weak Points": {
+    name: ARMS_WEAK_POINTS_TEMPLATE_NAME,
+    week: ARMS_WEAK_POINTS_TEMPLATE_WEEK,
+    description: ARMS_WEAK_POINTS_TEMPLATE_DESCRIPTION,
+    exercises: DEFAULT_ARMS_WEAK_POINTS_EXERCISES,
+  },
+  // Aliases for the original two-slot naming.
+  Upper: UPPER_1_TEMPLATE,
+  Lower: LOWER_1_TEMPLATE,
+};
+
+export function hasDefaultTemplate(workoutType: string): boolean {
+  return workoutType in DEFAULT_WORKOUT_TEMPLATES;
+}
+
 export function getSplitDefinition(splitType: SplitType): SplitDefinition {
   return SPLIT_DEFINITIONS[splitType];
 }
@@ -370,7 +888,7 @@ export function getSplitSlots(splitType: SplitType): string[] {
 const DEFAULT_WEEKLY_CYCLES: Record<SplitType, (string | null)[]> = {
   // Monday..Sunday
   PPL: ["Push", "Pull", "Legs", null, "Push", "Pull", null],
-  UPPER_LOWER: ["Upper", "Lower", null, "Upper", "Lower", null, null],
+  UPPER_LOWER: ["Upper #1", "Lower #1", null, "Upper #2", "Lower #2", "Arms & Weak Points", null],
 };
 
 export function getDefaultWeeklyCycle(splitType: SplitType): WeeklyCycle {
@@ -614,15 +1132,16 @@ export function buildQuickFillWorkout(
   workoutType: string,
   substitutionMemory: SubstitutionMemory = {},
 ): LoggedWorkout {
-  if (workoutType === "Upper") {
+  const template = DEFAULT_WORKOUT_TEMPLATES[workoutType];
+  if (template) {
     return {
       id: createId("workout"),
       dayOfWeek,
       workoutType,
-      templateName: UPPER_1_TEMPLATE_NAME,
-      templateDescription: UPPER_1_TEMPLATE_DESCRIPTION,
-      templateWeek: UPPER_1_TEMPLATE_WEEK,
-      exercises: DEFAULT_UPPER_1_EXERCISES.map((exercise) =>
+      templateName: template.name,
+      templateDescription: template.description,
+      templateWeek: template.week,
+      exercises: template.exercises.map((exercise) =>
         applySubstitutionMemory(exercise, substitutionMemory),
       ),
       loggedAt: new Date().toISOString(),
