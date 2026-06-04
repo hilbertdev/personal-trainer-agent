@@ -70,6 +70,43 @@ public sealed record SyncStravaActivitiesRequest(
     DateOnly From,
     DateOnly To);
 
+public sealed record ImportProgramRequest(
+    string Name,
+    Guid AthleteId,
+    DateOnly StartDate,
+    DateOnly? EndDate,
+    IReadOnlyList<ImportMesocycleRequest> Mesocycles);
+
+public sealed record ImportMesocycleRequest(
+    string Name,
+    DateOnly StartDate,
+    int DurationWeeks,
+    IReadOnlyList<ImportWeeklyPlanRequest> WeeklyPlans);
+
+public sealed record ImportWeeklyPlanRequest(
+    int WeekNumber,
+    IReadOnlyList<ImportWorkoutTemplateRequest> Workouts);
+
+public sealed record ImportWorkoutTemplateRequest(
+    string Name,
+    DayOfWeek DayOfWeek,
+    IReadOnlyList<ExerciseTemplateRequest> Exercises,
+    string? WorkoutType,
+    string? Description);
+
+public sealed record EndProgramRequest(DateOnly? EndDate);
+
+public sealed record ProgramSummaryResponse(
+    Guid Id,
+    string Name,
+    Guid AthleteId,
+    DateOnly StartDate,
+    DateOnly? EndDate,
+    bool IsActive,
+    int TotalWeeks,
+    int CurrentWeek,
+    int SessionsPerWeek);
+
 public sealed record TrainingProgramResponse(
     Guid Id,
     string Name,
@@ -246,6 +283,75 @@ public static class TrainingProgramContractMapper
     public static SyncStravaActivitiesCommand ToCommand(SyncStravaActivitiesRequest request)
     {
         return new SyncStravaActivitiesCommand(request.AthleteId, request.From, request.To);
+    }
+
+    public static ImportProgramCommand ToCommand(ImportProgramRequest request)
+    {
+        return new ImportProgramCommand(
+            request.Name,
+            request.AthleteId,
+            request.StartDate,
+            request.EndDate,
+            request.Mesocycles
+                .Select(mesocycle => new ImportMesocycleCommand(
+                    mesocycle.Name,
+                    mesocycle.StartDate,
+                    mesocycle.DurationWeeks,
+                    mesocycle.WeeklyPlans
+                        .Select(weeklyPlan => new ImportWeeklyPlanCommand(
+                            weeklyPlan.WeekNumber,
+                            weeklyPlan.Workouts
+                                .Select(workout => new ImportWorkoutTemplateCommand(
+                                    workout.Name,
+                                    workout.DayOfWeek,
+                                    workout.Exercises.Select(ToInput).ToList(),
+                                    workout.WorkoutType,
+                                    workout.Description))
+                                .ToList()))
+                        .ToList()))
+                .ToList());
+    }
+
+    private static ExerciseTemplateInput ToInput(ExerciseTemplateRequest exercise)
+    {
+        return new ExerciseTemplateInput(
+            exercise.ExerciseName,
+            exercise.WarmupSets,
+            exercise.TargetSets,
+            exercise.TargetRepMin,
+            exercise.TargetRepMax,
+            exercise.EarlySetRpe,
+            exercise.LastSetRpe,
+            exercise.RestTime,
+            exercise.LastSetIntensityTechnique,
+            exercise.Notes,
+            exercise.Category,
+            exercise.Substitutions);
+    }
+
+    public static ProgramSummaryResponse ToSummary(TrainingProgram program)
+    {
+        var totalWeeks = program.Mesocycles.Sum(mesocycle => mesocycle.DurationWeeks);
+        var sessionsPerWeek = program.Mesocycles
+            .SelectMany(mesocycle => mesocycle.WeeklyPlans)
+            .Select(weeklyPlan => weeklyPlan.WorkoutTemplates.Count)
+            .DefaultIfEmpty(0)
+            .Max();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var isActive = program.EndDate is null || program.EndDate >= today;
+        var elapsedWeeks = (int)Math.Floor((today.DayNumber - program.StartDate.DayNumber) / 7.0) + 1;
+        var currentWeek = totalWeeks <= 0 ? 0 : Math.Clamp(elapsedWeeks, 1, totalWeeks);
+
+        return new ProgramSummaryResponse(
+            program.Id,
+            program.Name,
+            program.AthleteId,
+            program.StartDate,
+            program.EndDate,
+            isActive,
+            totalWeeks,
+            currentWeek,
+            sessionsPerWeek);
     }
 
     public static TrainingProgramResponse ToResponse(TrainingProgram program)

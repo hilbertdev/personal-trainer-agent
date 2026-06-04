@@ -5,10 +5,14 @@ import { AppShell } from "@/components/app-shell";
 import { BaselineWeekView } from "@/components/baseline-week-view";
 import { BetaDashboard } from "@/components/beta-dashboard";
 import { CreatePlanWizard } from "@/components/create-plan-wizard";
+import { CurrentWorkoutPage } from "@/components/current-workout-page";
+import { ProgramsPage } from "@/components/programs-page";
+import { useNav } from "@/nav-context";
 import { useProgram } from "@/program-context";
 
 export function AppRouter() {
   const { activeProgram } = useProgram();
+  const { view } = useNav();
 
   return (
     <>
@@ -22,7 +26,9 @@ export function AppRouter() {
 
       {activeProgram?.status === "active_mesocycle" && (
         <AppShell>
-          <ActiveMesocycleView program={activeProgram} />
+          {view === "today" && <CurrentWorkoutPage />}
+          {view === "plan" && <ActiveMesocycleView program={activeProgram} />}
+          {view !== "today" && view !== "plan" && <ProgramsPage />}
         </AppShell>
       )}
 
