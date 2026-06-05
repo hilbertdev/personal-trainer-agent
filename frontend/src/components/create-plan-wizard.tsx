@@ -168,7 +168,7 @@ export function CreatePlanWizard() {
           <div className="mt-8">
             <div className="flex items-center gap-3">
               <div className="h-px flex-1 bg-zinc-200 dark:bg-white/10" />
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
+              <span className="text-center text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400 sm:tracking-[0.2em]">
                 or start from a template
               </span>
               <div className="h-px flex-1 bg-zinc-200 dark:bg-white/10" />
@@ -259,10 +259,10 @@ export function CreatePlanWizard() {
               {weeklyCycle.days.map((day, index) => (
                 <div
                   key={day.dayOfWeek}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white/70 px-4 py-2.5 dark:border-white/10 dark:bg-white/5"
+                  className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between sm:py-2.5"
                 >
                   <span className="text-sm font-semibold">{day.dayOfWeek}</span>
-                  <div className="flex flex-wrap justify-end gap-1.5">
+                  <div className="flex flex-wrap gap-1.5 sm:justify-end">
                     {getSplitSlots(splitType).map((slot) => (
                       <DayOption
                         key={slot}
@@ -483,9 +483,9 @@ function DayOption({
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+    <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-zinc-200 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-white/5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <dt className="text-sm text-zinc-500 dark:text-zinc-400">{label}</dt>
-      <dd className="text-right text-sm font-semibold">
+      <dd className="min-w-0 text-sm font-semibold sm:text-right">
         {label === "Plan Name" ? <Badge tone="lime">{value}</Badge> : value}
       </dd>
     </div>
