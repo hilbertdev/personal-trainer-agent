@@ -7,7 +7,10 @@ import {
   Dumbbell,
   Link2,
   Loader2,
+  Plus,
   RefreshCw,
+  StickyNote,
+  Trash2,
   X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -19,6 +22,7 @@ import {
   getAthleteId,
   recordExecution,
   type ExerciseExecutionPayload,
+  type ExerciseTemplateDto,
   type WorkoutTemplateDto,
 } from "@/lib/training-api";
 import { useProgram } from "@/program-context";
@@ -26,12 +30,25 @@ import { cn } from "@/lib/utils";
 
 type Stage = "exercises" | "saving" | "done";
 
+interface PerformedSet {
+  reps: number;
+  weight: number;
+}
+
+interface SetDraft {
+  reps: string;
+  weight: string;
+}
+
+interface ExerciseDraft {
+  exerciseName: string;
+  sets: SetDraft[];
+}
+
 interface ExerciseResult {
   templateExerciseId: string;
   exerciseName: string;
-  setsPerformed: number;
-  repsPerformed: number;
-  weightUsed: number;
+  sets: PerformedSet[];
   substitutionReason: string | null;
 }
 
@@ -59,20 +76,51 @@ export function LiveWorkoutView({
   const total = exercises.length;
   const current = exercises[currentIndex];
 
-  const [draft, setDraft] = useState(() => createDraft(workout, 0));
+  const [draft, setDraft] = useState<ExerciseDraft>(() => createDraft(workout, 0));
 
   const completedPercent = total > 0 ? Math.round((results.length / total) * 100) : 100;
+
+  const updateSet = (index: number, field: keyof SetDraft, value: string) => {
+    setDraft((current) => ({
+      ...current,
+      sets: current.sets.map((set, setIndex) =>
+        setIndex === index ? { ...set, [field]: value } : set,
+      ),
+    }));
+  };
+
+  const addSet = () => {
+    setDraft((current) => {
+      const last = current.sets[current.sets.length - 1];
+      return {
+        ...current,
+        sets: [...current.sets, last ? { ...last } : { reps: "0", weight: "0" }],
+      };
+    });
+  };
+
+  const removeSet = (index: number) => {
+    setDraft((current) => ({
+      ...current,
+      sets:
+        current.sets.length > 1
+          ? current.sets.filter((_, setIndex) => setIndex !== index)
+          : current.sets,
+    }));
+  };
 
   const completeExercise = () => {
     if (!current) {
       return;
     }
+    const performedSets: PerformedSet[] = draft.sets.map((set) => ({
+      reps: clampNumber(set.reps),
+      weight: clampNumber(set.weight),
+    }));
     const result: ExerciseResult = {
       templateExerciseId: current.id,
       exerciseName: draft.exerciseName.trim() || current.exerciseName,
-      setsPerformed: clampNumber(draft.sets),
-      repsPerformed: clampNumber(draft.reps),
-      weightUsed: clampNumber(draft.weight),
+      sets: performedSets,
       substitutionReason:
         draft.exerciseName.trim() &&
         draft.exerciseName.trim().toLowerCase() !== current.exerciseName.toLowerCase()
@@ -98,12 +146,13 @@ export function LiveWorkoutView({
     const payloadExercises: ExerciseExecutionPayload[] = finalResults.map((result) => ({
       originalExerciseTemplateId: result.templateExerciseId,
       exerciseName: result.exerciseName,
-      setsPerformed: result.setsPerformed,
-      repsPerformed: result.repsPerformed,
-      weightUsed: result.weightUsed,
+      setsPerformed: result.sets.length,
+      repsPerformed: averageReps(result.sets),
+      weightUsed: averageWeight(result.sets),
       substitutionReason: result.substitutionReason,
       contextTags: [],
     }));
+    const totalVolume = finalResults.reduce((sum, result) => sum + exerciseVolume(result.sets), 0);
 
     try {
       await recordExecution(workout.id, {
@@ -111,8 +160,8 @@ export function LiveWorkoutView({
         date,
         exercises: payloadExercises,
         durationMinutes,
-        totalVolume: null,
-        notes: `${workout.workoutType ?? workout.name} - logged live`,
+        totalVolume: totalVolume > 0 ? totalVolume : null,
+        notes: buildExecutionNotes(workout, finalResults),
       });
       setStage("done");
     } catch (caught) {
@@ -152,6 +201,11 @@ export function LiveWorkoutView({
           <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
             {workout.workoutType ?? workout.name}
           </h2>
+          {workout.description && (
+            <p className="mt-1 max-w-2xl text-sm text-zinc-600 dark:text-zinc-300">
+              {workout.description}
+            </p>
+          )}
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={handleExit}>
           <X className="h-4 w-4" /> Quit
@@ -184,6 +238,8 @@ export function LiveWorkoutView({
             </div>
           </CardHeader>
 
+          <ExerciseNotes exercise={current} />
+
           <div className="grid gap-3">
             <Field label="Exercise (edit to substitute)">
               <input
@@ -193,37 +249,54 @@ export function LiveWorkoutView({
                 className={inputClass}
               />
             </Field>
-            <div className="grid grid-cols-3 gap-3">
-              <Field label="Sets">
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  value={draft.sets}
-                  onChange={(event) => setDraft({ ...draft, sets: event.target.value })}
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Reps">
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  value={draft.reps}
-                  onChange={(event) => setDraft({ ...draft, reps: event.target.value })}
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Weight (kg)">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  value={draft.weight}
-                  onChange={(event) => setDraft({ ...draft, weight: event.target.value })}
-                  className={inputClass}
-                />
-              </Field>
+
+            <div className="grid gap-2">
+              <div className="grid grid-cols-[2.5rem_1fr_1fr_2.25rem] items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <span>Set</span>
+                <span>Reps</span>
+                <span>Weight (kg)</span>
+                <span className="sr-only">Remove</span>
+              </div>
+              {draft.sets.map((set, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-[2.5rem_1fr_1fr_2.25rem] items-center gap-2"
+                >
+                  <span className="text-center text-sm font-bold text-zinc-500 dark:text-zinc-400">
+                    {index + 1}
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={set.reps}
+                    aria-label={`Set ${index + 1} reps`}
+                    onChange={(event) => updateSet(index, "reps", event.target.value)}
+                    className={inputClass}
+                  />
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    value={set.weight}
+                    aria-label={`Set ${index + 1} weight`}
+                    onChange={(event) => updateSet(index, "weight", event.target.value)}
+                    className={inputClass}
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Remove set ${index + 1}`}
+                    disabled={draft.sets.length <= 1}
+                    onClick={() => removeSet(index)}
+                    className="flex h-9 w-9 items-center justify-center rounded-2xl text-zinc-400 transition hover:bg-zinc-950/10 disabled:opacity-30 dark:hover:bg-white/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              <Button type="button" variant="secondary" size="sm" className="justify-self-start" onClick={addSet}>
+                <Plus className="h-4 w-4" /> Add set
+              </Button>
             </div>
 
             {current.substitutions.length > 0 && (
@@ -268,20 +341,50 @@ export function LiveWorkoutView({
             {results.map((result, index) => (
               <div
                 key={`${result.templateExerciseId}-${index}`}
-                className="flex items-center justify-between rounded-2xl bg-zinc-100 px-3 py-2 text-sm dark:bg-white/[0.06]"
+                className="flex items-start justify-between gap-3 rounded-2xl bg-zinc-100 px-3 py-2 text-sm dark:bg-white/[0.06]"
               >
                 <span className="flex items-center gap-2 font-medium">
-                  <CheckCircle2 className="h-4 w-4 text-lime-500" /> {result.exerciseName}
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-lime-500" /> {result.exerciseName}
                 </span>
-                <span className="text-zinc-500 dark:text-zinc-400">
-                  {result.setsPerformed} x {result.repsPerformed}
-                  {result.weightUsed > 0 ? ` @ ${result.weightUsed}kg` : ""}
+                <span className="text-right text-zinc-500 dark:text-zinc-400">
+                  {formatSets(result.sets)}
                 </span>
               </div>
             ))}
           </div>
         </Card>
       )}
+    </div>
+  );
+}
+
+function ExerciseNotes({ exercise }: { exercise: ExerciseTemplateDto }) {
+  const lines: string[] = [];
+  if (exercise.warmupSets) {
+    lines.push(`Warm-up: ${exercise.warmupSets}`);
+  }
+  if (exercise.earlySetRpe) {
+    lines.push(`Early sets: RPE ${exercise.earlySetRpe}`);
+  }
+  if (exercise.lastSetIntensityTechnique) {
+    lines.push(`Last set: ${exercise.lastSetIntensityTechnique}`);
+  }
+  if (exercise.notes) {
+    lines.push(exercise.notes);
+  }
+
+  if (lines.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mb-4 flex gap-2 rounded-2xl border border-amber-500/30 bg-amber-100/60 px-3 py-2 text-sm text-amber-900 dark:border-amber-300/30 dark:bg-amber-300/10 dark:text-amber-100">
+      <StickyNote className="mt-0.5 h-4 w-4 shrink-0" />
+      <div className="space-y-0.5">
+        {lines.map((line, index) => (
+          <p key={index}>{line}</p>
+        ))}
+      </div>
     </div>
   );
 }
@@ -406,21 +509,52 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 const inputClass =
   "w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-zinc-900 dark:text-white";
 
-function createDraft(workout: WorkoutTemplateDto, index: number) {
+function createDraft(workout: WorkoutTemplateDto, index: number): ExerciseDraft {
   const exercise = workout.exercises[index];
   if (!exercise) {
-    return { exerciseName: "", sets: "0", reps: "0", weight: "0" };
+    return { exerciseName: "", sets: [{ reps: "0", weight: "0" }] };
   }
   const midReps = Math.round((exercise.targetRepMin + exercise.targetRepMax) / 2);
+  const setCount = Math.max(1, exercise.targetSets);
   return {
     exerciseName: exercise.exerciseName,
-    sets: String(exercise.targetSets),
-    reps: String(midReps),
-    weight: "0",
+    sets: Array.from({ length: setCount }, () => ({ reps: String(midReps), weight: "0" })),
   };
 }
 
 function clampNumber(value: string): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function exerciseVolume(sets: PerformedSet[]): number {
+  return sets.reduce((sum, set) => sum + set.reps * set.weight, 0);
+}
+
+function averageReps(sets: PerformedSet[]): number {
+  if (sets.length === 0) {
+    return 0;
+  }
+  return Math.round(sets.reduce((sum, set) => sum + set.reps, 0) / sets.length);
+}
+
+function averageWeight(sets: PerformedSet[]): number {
+  const weighted = sets.filter((set) => set.weight > 0);
+  if (weighted.length === 0) {
+    return 0;
+  }
+  const average = weighted.reduce((sum, set) => sum + set.weight, 0) / weighted.length;
+  return Math.round(average * 100) / 100;
+}
+
+function formatSets(sets: PerformedSet[]): string {
+  return sets
+    .map((set) => (set.weight > 0 ? `${set.reps}x${set.weight}kg` : `${set.reps} reps`))
+    .join(", ");
+}
+
+function buildExecutionNotes(workout: WorkoutTemplateDto, results: ExerciseResult[]): string {
+  const header = `${workout.workoutType ?? workout.name} - logged live`;
+  const lines = results.map((result) => `${result.exerciseName}: ${formatSets(result.sets)}`);
+  return [header, ...lines].join("\n");
 }
