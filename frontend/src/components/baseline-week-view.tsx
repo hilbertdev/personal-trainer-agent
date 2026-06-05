@@ -69,7 +69,7 @@ export function BaselineWeekView({ program }: { program: Program }) {
               <Badge tone="zinc">{definition.label}</Badge>
               <Badge tone="zinc">{program.mesocycleLengthWeeks} week mesocycle</Badge>
             </div>
-            <h2 className="break-words text-3xl font-black leading-tight tracking-tight sm:text-5xl">
+            <h2 className="max-w-full break-words text-2xl font-black leading-tight tracking-tight [overflow-wrap:anywhere] sm:text-5xl">
               {program.name}
             </h2>
             <p className="mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-300">
