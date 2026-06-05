@@ -15,7 +15,7 @@ export function Progress({
       className={cn("relative h-3 overflow-hidden rounded-full bg-zinc-950/10 dark:bg-white/10", className)}
     >
       <ProgressPrimitive.Indicator
-        className="h-full rounded-full bg-lime-300 transition-all"
+        className="h-full rounded-full bg-lime-300 transition-transform motion-reduce:transition-none"
         style={{ transform: `translateX(-${100 - Math.min(value, 100)}%)` }}
       />
     </ProgressPrimitive.Root>

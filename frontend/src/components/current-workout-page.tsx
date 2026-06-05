@@ -59,21 +59,24 @@ export function CurrentWorkoutPage() {
         <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{todayLabel}</h2>
       </section>
 
-      {isLoading && (
-        <Card className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading today's workout...
-        </Card>
-      )}
+      <div aria-live="polite">
+        {isLoading && (
+          <Card className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
+            <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />{" "}
+            Loading today’s workout…
+          </Card>
+        )}
 
-      {isError && (
-        <Card className="text-sm text-red-600 dark:text-red-300">
-          Could not load today's workout. Check that the backend is running or try again.
-        </Card>
-      )}
+        {isError && (
+          <Card className="text-sm text-red-600 dark:text-red-300">
+            Could not load today’s workout. Check that the backend is running, then try again.
+          </Card>
+        )}
+      </div>
 
       {!isLoading && !isError && !today && (
         <Card className="flex flex-col items-center gap-3 py-10 text-center">
-          <Moon className="h-10 w-10 text-zinc-400" />
+          <Moon className="h-10 w-10 text-zinc-400" aria-hidden="true" />
           <CardTitle>Rest day</CardTitle>
           <CardDescription>No workout is scheduled for today. Enjoy your recovery.</CardDescription>
         </Card>
@@ -83,16 +86,16 @@ export function CurrentWorkoutPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <CardTitle className="text-2xl">
+              <div className="min-w-0">
+                <CardTitle className="break-words text-2xl">
                   {today.workoutTemplate.workoutType ?? today.workoutTemplate.name}
                 </CardTitle>
                 <CardDescription>
                   {today.workoutTemplate.exercises.length} exercises
-                  {today.workoutTemplate.description ? ` - ${today.workoutTemplate.description}` : ""}
+                  {today.workoutTemplate.description ? ` · ${today.workoutTemplate.description}` : ""}
                 </CardDescription>
               </div>
-              <Dumbbell className="h-6 w-6 text-lime-400" />
+              <Dumbbell className="h-6 w-6 shrink-0 text-lime-400" aria-hidden="true" />
             </div>
           </CardHeader>
 
@@ -100,19 +103,19 @@ export function CurrentWorkoutPage() {
             {today.workoutTemplate.exercises.map((exercise) => (
               <div
                 key={exercise.id}
-                className="rounded-2xl bg-zinc-100 p-3 dark:bg-white/[0.06]"
+                className="min-w-0 rounded-2xl bg-zinc-100 p-3 dark:bg-white/[0.06]"
               >
-                <p className="font-semibold">{exercise.exerciseName}</p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {exercise.targetSets} x {exercise.targetRepMin}-{exercise.targetRepMax}
-                  {exercise.lastSetRpe ? ` - RPE ${exercise.lastSetRpe}` : ""}
+                <p className="break-words font-semibold">{exercise.exerciseName}</p>
+                <p className="text-sm tabular-nums text-zinc-500 dark:text-zinc-400">
+                  {exercise.targetSets} × {exercise.targetRepMin}–{exercise.targetRepMax}
+                  {exercise.lastSetRpe ? ` · RPE ${exercise.lastSetRpe}` : ""}
                 </p>
               </div>
             ))}
           </div>
 
           <Button type="button" className="mt-5 w-full" onClick={() => setIsLive(true)}>
-            <Play className="h-4 w-4" /> Start workout
+            <Play className="h-4 w-4" aria-hidden="true" /> Start Workout
           </Button>
         </Card>
       )}
