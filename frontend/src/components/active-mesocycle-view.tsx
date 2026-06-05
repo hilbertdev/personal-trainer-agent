@@ -66,7 +66,7 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
 
   return (
     <div className="grid gap-4">
-      <section className="grid gap-4 md:grid-cols-[1.15fr_0.85fr]">
+      <section className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <Card className="relative overflow-hidden">
           <div className="absolute right-[-4rem] top-[-4rem] h-40 w-40 rounded-full bg-lime-300/20 blur-3xl" />
           <CardHeader className="relative">
@@ -74,7 +74,7 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
               <Badge tone="lime">Active Mesocycle</Badge>
               <Badge tone="zinc">{definition.label}</Badge>
             </div>
-            <h2 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl">
+            <h2 className="break-words text-3xl font-black leading-tight tracking-tight sm:text-5xl">
               {program.name}
             </h2>
             <p className="mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-300">
@@ -82,7 +82,7 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
               baseline week using your progression settings.
             </p>
           </CardHeader>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-3">
             <Stat label="Current week" value={`${currentWeek} / ${mesocycle.lengthWeeks}`} />
             <Stat label="Sessions / week" value={sessionsPerWeek} />
             <Stat label="Today's workout" value={todaysType ?? "Rest"} />
@@ -117,15 +117,15 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
       <section>
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <CardTitle>Today's Workout</CardTitle>
                 <CardDescription>
                   {today} - Week {currentWeek}
                   {todaysType ? ` - ${todaysType} Day` : ""}
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 {todaysWorkout && todaysType && (
                   <Button
                     type="button"
@@ -171,7 +171,7 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
                   Generated weeks with placeholder progression applied.
                 </CardDescription>
               </div>
-              <div className="flex gap-2 overflow-x-auto">
+              <div className="-mx-1 flex max-w-full gap-2 overflow-x-auto px-1 pb-1">
                 {mesocycle.weeks.map((week) => (
                   <Button
                     key={week.weekNumber}
@@ -208,7 +208,7 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
             </div>
           )}
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {activeWeek.days
               .filter((day) => day.workoutType !== null)
               .map((day) => {
@@ -224,8 +224,8 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="font-bold">
+                      <div className="min-w-0">
+                        <h3 className="break-words font-bold">
                           {day.dayOfWeek} - {day.workoutType} Day
                         </h3>
                         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -294,7 +294,7 @@ function WorkoutExerciseGrid({
   compact?: boolean;
 }) {
   return (
-    <div className={cn("gap-2", compact ? "mt-3 space-y-2" : "grid sm:grid-cols-2")}>
+    <div className={cn("min-w-0 gap-2", compact ? "mt-3 space-y-2" : "grid sm:grid-cols-2")}>
       {workout.exercises.map((exercise) => (
         <div
           key={exercise.name}
@@ -303,7 +303,7 @@ function WorkoutExerciseGrid({
             compact ? "bg-white/60 p-2 dark:bg-white/[0.04]" : "bg-zinc-100 p-3 dark:bg-white/[0.06]",
           )}
         >
-          <p className={cn("font-semibold", compact ? "text-sm" : "")}>{exercise.name}</p>
+          <p className={cn("break-words font-semibold", compact ? "text-sm" : "")}>{exercise.name}</p>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {exercise.sets} x {exercise.repRangeMin}-{exercise.repRangeMax}
             {exercise.weight > 0 ? ` | ${exercise.weight}kg` : ""} | RPE {exercise.rpe}
@@ -317,7 +317,7 @@ function WorkoutExerciseGrid({
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-3xl border border-zinc-200 bg-white/70 p-4 dark:border-white/10 dark:bg-black/20">
-      <p className="text-2xl font-black">{value}</p>
+      <p className="break-words text-2xl font-black">{value}</p>
       <p className="text-sm text-zinc-400">{label}</p>
     </div>
   );

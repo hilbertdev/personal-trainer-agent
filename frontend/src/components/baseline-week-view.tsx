@@ -60,7 +60,7 @@ export function BaselineWeekView({ program }: { program: Program }) {
 
   return (
     <div className="grid gap-4">
-      <section className="grid gap-4 md:grid-cols-[1.15fr_0.85fr]">
+      <section className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <Card className="relative overflow-hidden">
           <div className="absolute right-[-4rem] top-[-4rem] h-40 w-40 rounded-full bg-lime-300/20 blur-3xl" />
           <CardHeader className="relative">
@@ -69,7 +69,7 @@ export function BaselineWeekView({ program }: { program: Program }) {
               <Badge tone="zinc">{definition.label}</Badge>
               <Badge tone="zinc">{program.mesocycleLengthWeeks} week mesocycle</Badge>
             </div>
-            <h2 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl">
+            <h2 className="break-words text-3xl font-black leading-tight tracking-tight sm:text-5xl">
               {program.name}
             </h2>
             <p className="mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-300">
@@ -100,11 +100,11 @@ export function BaselineWeekView({ program }: { program: Program }) {
         </Card>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+              <div className="min-w-0">
                 <CardTitle>Baseline Week</CardTitle>
                 <CardDescription>
                   Log the real workout you performed for each scheduled day.
@@ -114,6 +114,7 @@ export function BaselineWeekView({ program }: { program: Program }) {
                 type="button"
                 variant="secondary"
                 size="sm"
+                className="w-full sm:w-auto"
                 disabled={loggedCount === 0 || isSyncing}
                 onClick={handleSyncStrava}
               >
@@ -154,15 +155,15 @@ export function BaselineWeekView({ program }: { program: Program }) {
                       : "border-zinc-200 bg-white/70 dark:border-white/10 dark:bg-black/20",
                   )}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       {logged ? (
                         <CheckCircle2 className="h-5 w-5 text-lime-500" />
                       ) : (
                         <Clock className="h-5 w-5 text-zinc-400" />
                       )}
-                      <div>
-                        <p className="text-sm font-bold">
+                      <div className="min-w-0">
+                        <p className="break-words text-sm font-bold">
                           {day.dayOfWeek} - {workoutType}
                         </p>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -178,6 +179,7 @@ export function BaselineWeekView({ program }: { program: Program }) {
                       type="button"
                       variant={logged ? "ghost" : "secondary"}
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() =>
                         setActiveSession({
                           dayOfWeek: day.dayOfWeek,
@@ -201,7 +203,7 @@ export function BaselineWeekView({ program }: { program: Program }) {
                   {logged && logged.exercises.length > 0 && (
                     <ul className="mt-3 space-y-1 text-sm text-zinc-600 dark:text-zinc-300">
                       {logged.exercises.slice(0, 3).map((exercise) => (
-                        <li key={exercise.name} className="flex justify-between gap-2">
+                        <li key={exercise.name} className="flex min-w-0 justify-between gap-2">
                           <span className="truncate">{exercise.name}</span>
                           <span className="shrink-0 text-zinc-400">
                             {exercise.sets} x {exercise.repRangeMin}-{exercise.repRangeMax}
