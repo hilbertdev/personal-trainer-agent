@@ -59,9 +59,9 @@ export function Modal({
         onClick={(event) => event.stopPropagation()}
       >
         {(title || description) && (
-          <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-6 py-5 dark:border-white/10">
-            <div className="space-y-1">
-              {title && <h2 className="text-xl font-black tracking-tight">{title}</h2>}
+          <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-4 py-4 dark:border-white/10 sm:px-6 sm:py-5">
+            <div className="min-w-0 space-y-1">
+              {title && <h2 className="break-words text-xl font-black tracking-tight">{title}</h2>}
               {description && (
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
               )}
@@ -76,9 +76,9 @@ export function Modal({
             </button>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">{children}</div>
         {footer && (
-          <div className="border-t border-zinc-200 px-6 py-4 dark:border-white/10">{footer}</div>
+          <div className="border-t border-zinc-200 px-4 py-4 dark:border-white/10 sm:px-6">{footer}</div>
         )}
       </div>
     </div>
