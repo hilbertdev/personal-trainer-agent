@@ -10,6 +10,12 @@ using Training.Application.Scheduling;
 using Training.Application.Services;
 using Training.Domain.Entities;
 
+// Load a local .env (for development secrets such as Strava tokens) before the
+// configuration is built, so its values surface as environment variables. In
+// production these come from the environment (e.g. AWS Secrets Manager) and no
+// .env file is present, so this is a no-op.
+LoadLocalEnvFile();
+
 var builder = WebApplication.CreateBuilder(args);
 var sqliteConnectionString = builder.Configuration["TRAINING_SQLITE_CONNECTION_STRING"]
     ?? builder.Configuration["WORKOUTPLANNER_SQLITE_CONNECTION_STRING"]
@@ -264,6 +270,25 @@ static void RegisterStrava(IServiceCollection services, IConfiguration configura
         ?? throw new InvalidOperationException("Training.Strava registration method was not found.");
 
     registerMethod.Invoke(null, [services, baseAddress, accessToken]);
+}
+
+static void LoadLocalEnvFile()
+{
+    // Search the current directory and its parents for a .env file. This makes
+    // `dotnet run --project src/Training.Api` work regardless of where it is invoked.
+    var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
+
+    while (directory is not null)
+    {
+        var candidate = Path.Combine(directory.FullName, ".env");
+        if (File.Exists(candidate))
+        {
+            DotNetEnv.Env.Load(candidate, new DotNetEnv.LoadOptions(setEnvVars: true, clobberExistingVars: false));
+            return;
+        }
+
+        directory = directory.Parent;
+    }
 }
 
 static Assembly LoadAssembly(string assemblyName)
