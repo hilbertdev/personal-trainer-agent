@@ -31,7 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
             <Button type="button" size="sm" className="flex-1 sm:flex-none" onClick={openWizard}>
-              <Plus className="h-4 w-4" /> Create Workout Plan
+              <Plus className="h-4 w-4" aria-hidden="true" /> Create Workout Plan
             </Button>
             <div className="shrink-0">
               <ThemeToggle />
@@ -39,14 +39,20 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         {tabs.length > 1 && (
-          <nav className="flex gap-1 self-start rounded-full border border-zinc-200 bg-white/70 p-1 dark:border-white/10 dark:bg-black/20">
+          <nav
+            aria-label="Program views"
+            role="tablist"
+            className="flex gap-1 self-start rounded-full border border-zinc-200 bg-white/70 p-1 dark:border-white/10 dark:bg-black/20"
+          >
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
+                role="tab"
+                aria-selected={view === tab.id}
                 onClick={() => setView(tab.id)}
                 className={cn(
-                  "rounded-full px-4 py-1.5 text-sm font-semibold transition",
+                  "touch-manipulation rounded-full px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300",
                   view === tab.id
                     ? "bg-lime-300 text-zinc-950"
                     : "text-zinc-600 hover:bg-zinc-950/5 dark:text-zinc-300 dark:hover:bg-white/10",

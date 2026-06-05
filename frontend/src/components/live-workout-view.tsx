@@ -208,16 +208,16 @@ export function LiveWorkoutView({
           )}
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={handleExit}>
-          <X className="h-4 w-4" /> Quit
+          <X className="h-4 w-4" aria-hidden="true" /> Quit
         </Button>
       </section>
 
       <Card>
         <div className="mb-3 flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-400">
-          <span>
+          <span className="tabular-nums">
             Exercise {Math.min(currentIndex + 1, total)} of {total}
           </span>
-          <span>{completedPercent}% complete</span>
+          <span className="tabular-nums">{completedPercent}% complete</span>
         </div>
         <Progress value={completedPercent} />
       </Card>
@@ -226,15 +226,15 @@ export function LiveWorkoutView({
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <CardTitle className="text-2xl">{current.exerciseName}</CardTitle>
-                <CardDescription>
-                  Target: {current.targetSets} x {current.targetRepMin}-{current.targetRepMax}
-                  {current.lastSetRpe ? ` - RPE ${current.lastSetRpe}` : ""}
-                  {current.restTime ? ` - rest ${current.restTime}` : ""}
+              <div className="min-w-0">
+                <CardTitle className="break-words text-2xl">{current.exerciseName}</CardTitle>
+                <CardDescription className="tabular-nums">
+                  Target: {current.targetSets} × {current.targetRepMin}–{current.targetRepMax}
+                  {current.lastSetRpe ? ` · RPE ${current.lastSetRpe}` : ""}
+                  {current.restTime ? ` · rest ${current.restTime}` : ""}
                 </CardDescription>
               </div>
-              <Dumbbell className="h-6 w-6 text-lime-400" />
+              <Dumbbell className="h-6 w-6 shrink-0 text-lime-400" aria-hidden="true" />
             </div>
           </CardHeader>
 
@@ -245,6 +245,7 @@ export function LiveWorkoutView({
               <input
                 type="text"
                 value={draft.exerciseName}
+                autoComplete="off"
                 onChange={(event) => setDraft({ ...draft, exerciseName: event.target.value })}
                 className={inputClass}
               />
@@ -268,34 +269,36 @@ export function LiveWorkoutView({
                   <input
                     type="number"
                     inputMode="numeric"
+                    autoComplete="off"
                     min={0}
                     value={set.reps}
                     aria-label={`Set ${index + 1} reps`}
                     onChange={(event) => updateSet(index, "reps", event.target.value)}
-                    className={inputClass}
+                    className={cn(inputClass, "tabular-nums")}
                   />
                   <input
                     type="number"
                     inputMode="decimal"
+                    autoComplete="off"
                     min={0}
                     value={set.weight}
                     aria-label={`Set ${index + 1} weight`}
                     onChange={(event) => updateSet(index, "weight", event.target.value)}
-                    className={inputClass}
+                    className={cn(inputClass, "tabular-nums")}
                   />
                   <button
                     type="button"
                     aria-label={`Remove set ${index + 1}`}
                     disabled={draft.sets.length <= 1}
                     onClick={() => removeSet(index)}
-                    className="flex h-9 w-9 items-center justify-center rounded-2xl text-zinc-400 transition hover:bg-zinc-950/10 disabled:opacity-30 dark:hover:bg-white/10"
+                    className="flex h-9 w-9 touch-manipulation items-center justify-center rounded-2xl text-zinc-400 transition-colors hover:bg-zinc-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 disabled:opacity-30 dark:hover:bg-white/10"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               ))}
               <Button type="button" variant="secondary" size="sm" className="justify-self-start" onClick={addSet}>
-                <Plus className="h-4 w-4" /> Add set
+                <Plus className="h-4 w-4" aria-hidden="true" /> Add set
               </Button>
             </div>
 
@@ -307,7 +310,7 @@ export function LiveWorkoutView({
                     key={option.id}
                     type="button"
                     onClick={() => setDraft({ ...draft, exerciseName: option.exerciseName })}
-                    className="rounded-full border border-zinc-300 px-2.5 py-1 font-medium transition hover:bg-zinc-950/5 dark:border-white/15 dark:hover:bg-white/10"
+                    className="touch-manipulation rounded-full border border-zinc-300 px-2.5 py-1 font-medium transition-colors hover:bg-zinc-950/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 dark:border-white/15 dark:hover:bg-white/10"
                   >
                     {option.exerciseName}
                   </button>
@@ -316,18 +319,25 @@ export function LiveWorkoutView({
             )}
           </div>
 
-          {error && <p className="mt-3 text-sm text-red-600 dark:text-red-300">{error}</p>}
+          {error && (
+            <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-300">
+              {error}
+            </p>
+          )}
 
           <Button type="button" className="mt-5 w-full" onClick={completeExercise} disabled={stage === "saving"}>
             {stage === "saving" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />{" "}
+                Saving…
+              </>
             ) : currentIndex + 1 < total ? (
               <>
-                Complete exercise <ArrowRight className="h-4 w-4" />
+                Complete Exercise <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </>
             ) : (
               <>
-                Finish workout <Check className="h-4 w-4" />
+                Finish Workout <Check className="h-4 w-4" aria-hidden="true" />
               </>
             )}
           </Button>
@@ -343,10 +353,11 @@ export function LiveWorkoutView({
                 key={`${result.templateExerciseId}-${index}`}
                 className="flex items-start justify-between gap-3 rounded-2xl bg-zinc-100 px-3 py-2 text-sm dark:bg-white/[0.06]"
               >
-                <span className="flex items-center gap-2 font-medium">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-lime-500" /> {result.exerciseName}
+                <span className="flex min-w-0 items-center gap-2 font-medium">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-lime-500" aria-hidden="true" />{" "}
+                  <span className="break-words">{result.exerciseName}</span>
                 </span>
-                <span className="text-right text-zinc-500 dark:text-zinc-400">
+                <span className="shrink-0 text-right tabular-nums text-zinc-500 dark:text-zinc-400">
                   {formatSets(result.sets)}
                 </span>
               </div>
@@ -379,7 +390,7 @@ function ExerciseNotes({ exercise }: { exercise: ExerciseTemplateDto }) {
 
   return (
     <div className="mb-4 flex gap-2 rounded-2xl border border-amber-500/30 bg-amber-100/60 px-3 py-2 text-sm text-amber-900 dark:border-amber-300/30 dark:bg-amber-300/10 dark:text-amber-100">
-      <StickyNote className="mt-0.5 h-4 w-4 shrink-0" />
+      <StickyNote className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
       <div className="space-y-0.5">
         {lines.map((line, index) => (
           <p key={index}>{line}</p>
@@ -411,7 +422,7 @@ function WorkoutComplete({
   return (
     <div className="grid gap-4">
       <Card className="flex flex-col items-center gap-3 py-8 text-center">
-        <CheckCircle2 className="h-12 w-12 text-lime-500" />
+        <CheckCircle2 className="h-12 w-12 text-lime-500" aria-hidden="true" />
         <CardTitle className="text-2xl">Workout complete</CardTitle>
         <CardDescription>
           Logged {completedCount} exercise{completedCount === 1 ? "" : "s"} for {programName}.
@@ -435,19 +446,26 @@ function WorkoutComplete({
             className="w-full"
           >
             {syncStatus === "syncing" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />{" "}
+                Syncing…
+              </>
             ) : (
-              <RefreshCw className="h-4 w-4" />
+              <>
+                <RefreshCw className="h-4 w-4" aria-hidden="true" />{" "}
+                {syncStatus === "error" ? "Retry Strava Sync" : "Sync with Strava"}
+              </>
             )}
-            {syncStatus === "error" ? "Retry Strava sync" : "Sync with Strava"}
           </Button>
         )}
 
-        {syncStatus === "error" && (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-300">
-            Strava sync failed. Try again.
-          </p>
-        )}
+        <div aria-live="polite">
+          {syncStatus === "error" && (
+            <p className="mt-3 text-sm text-red-600 dark:text-red-300">
+              Strava sync failed. Check your connection, then try again.
+            </p>
+          )}
+        </div>
 
         {syncStatus === "synced" && (
           <div className="space-y-2">
@@ -462,25 +480,26 @@ function WorkoutComplete({
                   <button
                     key={activity.activityId}
                     type="button"
+                    aria-pressed={linked}
                     onClick={() => onLink(linked ? null : activity.activityId)}
                     className={cn(
-                      "flex w-full items-center justify-between gap-3 rounded-2xl border p-3 text-left transition",
+                      "flex w-full touch-manipulation items-center justify-between gap-3 rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300",
                       linked
                         ? "border-lime-400/50 bg-lime-300/10 dark:border-lime-300/30"
                         : "border-zinc-200 bg-white/70 hover:bg-zinc-950/5 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10",
                     )}
                   >
-                    <div>
-                      <p className="text-sm font-bold">{activity.name}</p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <div className="min-w-0">
+                      <p className="break-words text-sm font-bold">{activity.name}</p>
+                      <p className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                         {activity.durationMinutes} min
-                        {activity.avgHeartRate ? ` - avg HR ${activity.avgHeartRate}` : ""}
+                        {activity.avgHeartRate ? ` · avg HR ${activity.avgHeartRate}` : ""}
                       </p>
                     </div>
                     {linked ? (
                       <Badge tone="lime">Linked</Badge>
                     ) : (
-                      <Link2 className="h-4 w-4 text-zinc-400" />
+                      <Link2 className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden="true" />
                     )}
                   </button>
                 );
@@ -507,7 +526,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 const inputClass =
-  "w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-zinc-900 dark:text-white";
+  "w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus-visible:border-lime-400 focus-visible:ring-2 focus-visible:ring-lime-300 dark:border-white/15 dark:bg-zinc-900 dark:text-white";
 
 function createDraft(workout: WorkoutTemplateDto, index: number): ExerciseDraft {
   const exercise = workout.exercises[index];
@@ -549,7 +568,7 @@ function averageWeight(sets: PerformedSet[]): number {
 
 function formatSets(sets: PerformedSet[]): string {
   return sets
-    .map((set) => (set.weight > 0 ? `${set.reps}x${set.weight}kg` : `${set.reps} reps`))
+    .map((set) => (set.weight > 0 ? `${set.reps} × ${set.weight} kg` : `${set.reps} reps`))
     .join(", ");
 }
 
