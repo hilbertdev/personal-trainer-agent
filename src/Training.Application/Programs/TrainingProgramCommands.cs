@@ -67,3 +67,27 @@ public sealed record SyncStravaActivitiesCommand(
     Guid AthleteId,
     DateOnly From,
     DateOnly To);
+
+public sealed record ImportProgramCommand(
+    string Name,
+    Guid AthleteId,
+    DateOnly StartDate,
+    DateOnly? EndDate,
+    IReadOnlyList<ImportMesocycleCommand> Mesocycles);
+
+public sealed record ImportMesocycleCommand(
+    string Name,
+    DateOnly StartDate,
+    int DurationWeeks,
+    IReadOnlyList<ImportWeeklyPlanCommand> WeeklyPlans);
+
+public sealed record ImportWeeklyPlanCommand(
+    int WeekNumber,
+    IReadOnlyList<ImportWorkoutTemplateCommand> Workouts);
+
+public sealed record ImportWorkoutTemplateCommand(
+    string Name,
+    DayOfWeek DayOfWeek,
+    IReadOnlyList<ExerciseTemplateInput> Exercises,
+    string? WorkoutType,
+    string? Description);

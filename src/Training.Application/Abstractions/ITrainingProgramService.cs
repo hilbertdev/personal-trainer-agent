@@ -9,6 +9,19 @@ public interface ITrainingProgramService
         CreateTrainingProgramCommand command,
         CancellationToken cancellationToken = default);
 
+    Task<TrainingProgram> ImportProgramAsync(
+        ImportProgramCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TrainingProgram>> ListProgramsAsync(
+        Guid athleteId,
+        CancellationToken cancellationToken = default);
+
+    Task<TrainingProgram> EndProgramAsync(
+        Guid programId,
+        DateOnly endDate,
+        CancellationToken cancellationToken = default);
+
     Task<Mesocycle> AddMesocycleAsync(
         Guid programId,
         AddMesocycleCommand command,

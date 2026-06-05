@@ -27,8 +27,35 @@ import {
   type WorkoutMapping,
 } from "@/lib/program";
 import { syncStravaActivities } from "@/lib/strava";
+import { importProgram, PROGRAM_LINK_STORAGE_KEY } from "@/lib/training-api";
 
 const STORAGE_KEY = "pta:active-program";
+
+/** Map of local program id -> backend program id, so we only import a program once. */
+function readProgramLinks(): Record<string, string> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+  try {
+    const raw = window.localStorage.getItem(PROGRAM_LINK_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeProgramLink(localId: string, backendId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    const links = readProgramLinks();
+    links[localId] = backendId;
+    window.localStorage.setItem(PROGRAM_LINK_STORAGE_KEY, JSON.stringify(links));
+  } catch {
+    // Ignore storage failures; import will simply be retried next session.
+  }
+}
 
 export type StravaSyncStatus = "idle" | "syncing" | "synced" | "error";
 
@@ -117,6 +144,31 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
     } catch {
       // Ignore storage write failures (e.g. private mode); state remains in memory.
     }
+  }, [activeProgram]);
+
+  // Persist a program to the backend once it has a generated mesocycle. Importing
+  // is idempotent per local program id (tracked in localStorage) so this fires once
+  // for preset programs (created active) and once when a custom mesocycle is generated.
+  useEffect(() => {
+    if (!activeProgram || activeProgram.status !== "active_mesocycle" || !activeProgram.mesocycle) {
+      return;
+    }
+    if (readProgramLinks()[activeProgram.id]) {
+      return;
+    }
+    let cancelled = false;
+    void importProgram(activeProgram)
+      .then((result) => {
+        if (!cancelled && result?.id) {
+          writeProgramLink(activeProgram.id, result.id);
+        }
+      })
+      .catch(() => {
+        // Backend may be unavailable (mock mode); the program stays local-only.
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [activeProgram]);
 
   const openWizard = useCallback(() => setIsWizardOpen(true), []);
