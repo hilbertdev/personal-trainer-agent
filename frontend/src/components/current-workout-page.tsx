@@ -56,7 +56,7 @@ export function CurrentWorkoutPage() {
           <Badge tone="lime">Current Workout</Badge>
           <Badge tone="zinc">{programName}</Badge>
         </div>
-        <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{todayLabel}</h2>
+        <h2 className="text-2xl font-black tracking-tight md:text-3xl lg:text-4xl">{todayLabel}</h2>
       </section>
 
       <div aria-live="polite">

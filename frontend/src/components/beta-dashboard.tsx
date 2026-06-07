@@ -121,7 +121,7 @@ export function BetaDashboard() {
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-700">
               This week
             </p>
-            <h2 className="text-5xl font-black tracking-tight">
+            <h2 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
               {progress.completedCount}/{sample.summary.trainingDays}
             </h2>
             <p className="text-sm font-medium text-zinc-700">
@@ -216,12 +216,12 @@ function Shell({ children }: { children: React.ReactNode }) {
   const { openWizard } = useProgram();
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#bef264_0,#f4f4f5_35%,#e4e4e7_75%)] px-3 py-4 text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,#4d7c0f_0,#18181b_35%,#030712_75%)] dark:text-white sm:px-6 sm:py-5 lg:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#bef264_0,#f4f4f5_35%,#e4e4e7_75%)] px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,#4d7c0f_0,#18181b_35%,#030712_75%)] dark:text-white sm:px-6 sm:py-5 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
         <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="min-w-0">
             <Badge tone="lime">Phase 1 beta</Badge>
-            <h1 className="mt-3 max-w-full break-words text-4xl font-black leading-none tracking-tight sm:text-5xl">
+            <h1 className="mt-3 max-w-full break-words text-2xl font-black leading-none tracking-tight md:text-3xl lg:text-4xl xl:text-5xl">
               Personal Trainer Agent
             </h1>
           </div>
@@ -252,7 +252,7 @@ function Hero({ analysis, sample }: { analysis: WorkoutAnalysis; sample: Workout
           <Badge tone="zinc">{sample.summary.trainingDays} training days</Badge>
           <Badge tone="zinc">{sample.summary.totalSets} sets</Badge>
         </div>
-        <h2 className="max-w-3xl break-words text-3xl font-black leading-tight tracking-tight sm:text-6xl">
+        <h2 className="max-w-3xl break-words text-2xl font-black leading-tight tracking-tight sm:text-3xl lg:text-4xl xl:text-6xl">
           {USE_MOCK_DATA
             ? "Launch-ready workout planning without a live backend dependency."
             : "Workout planning powered by your training API."}
@@ -340,7 +340,7 @@ function WorkoutCard({
 
 function ProjectedWeekGrid({ week }: { week: ProjectedWeek }) {
   return (
-    <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {week.workouts.map((workout) => (
         <div key={`${week.weekNumber}-${workout.date}`} className="rounded-3xl bg-zinc-100 p-4 dark:bg-black/20">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatDate(workout.date)}</p>

@@ -1219,7 +1219,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                     workout_template_id AS WorkoutTemplateId,
                     source AS Source,
                     duration_seconds AS DurationSeconds,
-                    CAST(total_volume AS TEXT) AS TotalVolume,
+                    total_volume AS TotalVolume,
                     notes AS Notes,
                     provider_name AS ProviderName,
                     provider_activity_id AS ProviderActivityId
@@ -1309,7 +1309,7 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
                 SELECT
                     athlete_id AS AthleteId,
                     load_date AS LoadDate,
-                    CAST(load_value AS TEXT) AS LoadValue
+                    load_value AS LoadValue
                 FROM training_load_summaries
                 WHERE athlete_id = @AthleteId
                   AND load_date >= @StartDate

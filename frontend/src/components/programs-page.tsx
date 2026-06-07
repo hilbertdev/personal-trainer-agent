@@ -50,14 +50,14 @@ export function ProgramsPage() {
 
   return (
     <div className="grid gap-4">
-      <section className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Programs</h2>
+      <section className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-black tracking-tight md:text-3xl lg:text-4xl">Programs</h2>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
             Your active and archived training programs.
           </p>
         </div>
-        <Button type="button" size="sm" onClick={openWizard}>
+        <Button type="button" size="sm" className="w-full sm:w-auto" onClick={openWizard}>
           <Plus className="h-4 w-4" aria-hidden="true" /> Create Workout Plan
         </Button>
       </section>
@@ -163,7 +163,7 @@ function ProgramCard({
         </div>
       </CardHeader>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <Stat label="Week" value={`${program.currentWeek} / ${program.totalWeeks}`} />
         <Stat label="Sessions / wk" value={program.sessionsPerWeek} />
         <Stat label="Progress" value={`${progressPercent}%`} />
@@ -172,11 +172,11 @@ function ProgramCard({
       {!archived && <Progress value={progressPercent} />}
 
       {!archived && (
-        <div className="flex items-center gap-2">
-          <Button type="button" size="sm" onClick={onOpen} className="flex-1">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button type="button" size="sm" onClick={onOpen} className="w-full sm:flex-1">
             Today’s Workout
           </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={onEnd} disabled={ending}>
+          <Button type="button" size="sm" variant="ghost" onClick={onEnd} disabled={ending} className="w-full sm:w-auto">
             {ending ? (
               <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
             ) : (

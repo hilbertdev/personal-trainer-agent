@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Training.Api\Training.Api.csproj" />
+    <ProjectReference Include="..\..\src\Training.Infrastructure\Training.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Training.Strava\Training.Strava.csproj" />
+  </ItemGroup>
+</Project>

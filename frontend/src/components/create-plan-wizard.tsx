@@ -4,6 +4,7 @@ import { Check, ChevronLeft, Dumbbell } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { inputClassName } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { WeeklyWorkloadSummary } from "@/components/weekly-workload-summary";
 import {
@@ -106,23 +107,23 @@ export function CreatePlanWizard() {
   };
 
   const footer = (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
       {step > 1 ? (
-        <Button type="button" variant="ghost" size="sm" onClick={() => setStep((value) => value - 1)}>
+        <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => setStep((value) => value - 1)}>
           <ChevronLeft className="h-4 w-4" /> Back
         </Button>
       ) : (
-        <Button type="button" variant="ghost" size="sm" onClick={handleClose}>
+        <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto" onClick={handleClose}>
           Cancel
         </Button>
       )}
 
       {step < TOTAL_STEPS ? (
-        <Button type="button" disabled={!canContinue} onClick={() => setStep((value) => value + 1)}>
+        <Button type="button" disabled={!canContinue} className="w-full sm:w-auto" onClick={() => setStep((value) => value + 1)}>
           Continue
         </Button>
       ) : (
-        <Button type="button" onClick={handleCreate}>
+        <Button type="button" className="w-full sm:w-auto" onClick={handleCreate}>
           <Dumbbell className="h-4 w-4" /> Create Plan
         </Button>
       )}
@@ -150,7 +151,7 @@ export function CreatePlanWizard() {
             onChange={(event) => setName(event.target.value)}
             placeholder="Hypertrophy Block A"
             autoFocus
-            className="mt-2 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-base outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+            className={cn("mt-2", inputClassName)}
           />
           <div className="mt-3 flex flex-wrap gap-2">
             {PLAN_NAME_EXAMPLES.map((example) => (
@@ -158,7 +159,7 @@ export function CreatePlanWizard() {
                 key={example}
                 type="button"
                 onClick={() => setName(example)}
-                className="rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 transition hover:border-lime-400 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300"
+                className="min-h-11 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-2 text-xs font-medium text-zinc-600 transition hover:border-lime-400 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300"
               >
                 {example}
               </button>
@@ -287,7 +288,7 @@ export function CreatePlanWizard() {
 
       {step === 4 && (
         <StepContainer title="Mesocycle duration" subtitle="How long is this mesocycle?">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {MESOCYCLE_LENGTH_OPTIONS.map((weeks) => {
               const selected = mesocycleLengthWeeks === weeks;
               return (
@@ -438,7 +439,7 @@ function OptionGroup({
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                "rounded-full border px-4 py-2 text-sm font-medium transition",
+                "min-h-11 rounded-full border px-4 py-2 text-sm font-medium transition",
                 selected
                   ? "border-lime-400 bg-lime-300/20 text-zinc-950 dark:text-white"
                   : "border-zinc-200 bg-white/70 text-zinc-600 hover:border-lime-300 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300",
@@ -468,7 +469,7 @@ function DayOption({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1 text-xs font-medium transition",
+                "min-h-11 rounded-full border px-3 py-2 text-xs font-medium transition",
         selected
           ? isRest
             ? "border-zinc-400 bg-zinc-200 text-zinc-700 dark:border-white/20 dark:bg-white/15 dark:text-white"
