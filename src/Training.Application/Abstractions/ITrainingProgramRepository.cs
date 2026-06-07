@@ -27,6 +27,10 @@ public interface ITrainingProgramRepository
         Guid programId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<TrainingProgram>> ListProgramsAsync(
+        Guid athleteId,
+        CancellationToken cancellationToken = default);
+
     Task<TrainingProgramOverview?> GetProgramOverviewAsync(
         Guid programId,
         CancellationToken cancellationToken = default);

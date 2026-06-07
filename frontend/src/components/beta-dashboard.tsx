@@ -114,7 +114,7 @@ export function BetaDashboard() {
 
   return (
     <Shell>
-      <section className="grid gap-4 md:grid-cols-[1.15fr_0.85fr]">
+      <section className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <Hero analysis={analysis} sample={sample} />
         <Card className="bg-lime-300 text-zinc-950">
           <CardHeader>
@@ -136,10 +136,10 @@ export function BetaDashboard() {
         </Card>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+      <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-start justify-between gap-3">
               <div>
                 <CardTitle>Recommendations</CardTitle>
               <CardDescription>Generated from the local demo planning dataset.</CardDescription>
@@ -190,7 +190,7 @@ export function BetaDashboard() {
                 <CardTitle>Hypertrophy phase projection</CardTitle>
                 <CardDescription>Four-week plan from the existing scheduler.</CardDescription>
               </div>
-              <div className="flex gap-2 overflow-x-auto">
+              <div className="-mx-1 flex max-w-full gap-2 overflow-x-auto px-1 pb-1">
                 {analysis.projectedWeeks.map((week) => (
                   <Button
                     key={week.weekNumber}
@@ -216,20 +216,22 @@ function Shell({ children }: { children: React.ReactNode }) {
   const { openWizard } = useProgram();
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#bef264_0,#f4f4f5_35%,#e4e4e7_75%)] px-4 py-5 text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,#4d7c0f_0,#18181b_35%,#030712_75%)] dark:text-white sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-7xl flex-col gap-5">
-        <header className="flex items-center justify-between gap-4">
-          <div>
+    <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#bef264_0,#f4f4f5_35%,#e4e4e7_75%)] px-3 py-4 text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,#4d7c0f_0,#18181b_35%,#030712_75%)] dark:text-white sm:px-6 sm:py-5 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+        <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="min-w-0">
             <Badge tone="lime">Phase 1 beta</Badge>
-            <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">
+            <h1 className="mt-3 max-w-full break-words text-4xl font-black leading-none tracking-tight sm:text-5xl">
               Personal Trainer Agent
             </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Button type="button" size="sm" onClick={openWizard}>
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
+            <Button type="button" size="sm" className="flex-1 sm:flex-none" onClick={openWizard}>
               <Plus className="h-4 w-4" /> Create Workout Plan
             </Button>
-            <ThemeToggle />
+            <div className="shrink-0">
+              <ThemeToggle />
+            </div>
           </div>
         </header>
         {children}
@@ -250,7 +252,7 @@ function Hero({ analysis, sample }: { analysis: WorkoutAnalysis; sample: Workout
           <Badge tone="zinc">{sample.summary.trainingDays} training days</Badge>
           <Badge tone="zinc">{sample.summary.totalSets} sets</Badge>
         </div>
-        <h2 className="max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-6xl">
+        <h2 className="max-w-3xl break-words text-3xl font-black leading-tight tracking-tight sm:text-6xl">
           {USE_MOCK_DATA
             ? "Launch-ready workout planning without a live backend dependency."
             : "Workout planning powered by your training API."}
@@ -261,7 +263,7 @@ function Hero({ analysis, sample }: { analysis: WorkoutAnalysis; sample: Workout
             : "Sample workouts, fatigue analysis, and progress are loaded from the ASP.NET API. If the API is unreachable, the dashboard falls back to the same mock data."}
         </p>
       </CardHeader>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-3">
         <Stat icon={Flame} label="Fatigue score" value={analysis.fatigueAnalysis.totalFatigueScore} />
         <Stat icon={Activity} label="Minutes planned" value={sample.summary.totalDurationMinutes} />
         <Stat icon={Sparkles} label="Projected weeks" value={analysis.projectedWeeks.length} />
@@ -288,7 +290,7 @@ function WorkoutCard({
   return (
     <Collapsible.Root open={expanded} onOpenChange={onExpandedChange}>
       <div className="rounded-3xl border border-zinc-200 bg-white/70 p-4 dark:border-white/10 dark:bg-black/20">
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <Checkbox
             checked={completed || workout.isRestDay}
             disabled={completed || workout.isRestDay || saving}
@@ -299,14 +301,14 @@ function WorkoutCard({
             }}
           />
           <Collapsible.Trigger asChild>
-            <button className="flex flex-1 items-center justify-between gap-3 text-left">
-              <div>
+            <button className="flex min-w-0 flex-1 flex-col gap-3 text-left sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatDate(workout.date)}</p>
-                <h3 className="text-lg font-bold">
+                <h3 className="break-words text-lg font-bold">
                   {workout.workoutType} {workout.isRestDay ? "Recovery" : "Session"}
                 </h3>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 <Badge tone={workout.intensity === "High" ? "red" : workout.intensity === "Moderate" ? "amber" : "lime"}>
                   {workout.intensity}
                 </Badge>
@@ -319,7 +321,7 @@ function WorkoutCard({
         </div>
         <Collapsible.Content className="mt-4 space-y-3 border-t border-zinc-200 pt-4 dark:border-white/10">
           <p className="text-sm text-zinc-600 dark:text-zinc-300">{workout.notes}</p>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-2 sm:grid-cols-2">
             {workout.exercises.map((exercise) => (
               <div key={exercise.name} className="rounded-2xl bg-zinc-100 p-3 dark:bg-white/[0.06]">
                 <p className="font-semibold">{exercise.name}</p>
@@ -338,7 +340,7 @@ function WorkoutCard({
 
 function ProjectedWeekGrid({ week }: { week: ProjectedWeek }) {
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-4">
       {week.workouts.map((workout) => (
         <div key={`${week.weekNumber}-${workout.date}`} className="rounded-3xl bg-zinc-100 p-4 dark:bg-black/20">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatDate(workout.date)}</p>

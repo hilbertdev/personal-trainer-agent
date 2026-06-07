@@ -7,7 +7,7 @@ export function WeeklyWorkloadSummary({ weeklyCycle }: { weeklyCycle: WeeklyCycl
   const types = Object.keys(workload.frequencyByType);
 
   return (
-    <div className="rounded-3xl border border-zinc-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
+    <div className="min-w-0 rounded-3xl border border-zinc-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
         Weekly Training Frequency
       </p>
@@ -18,8 +18,8 @@ export function WeeklyWorkloadSummary({ weeklyCycle }: { weeklyCycle: WeeklyCycl
           </p>
         ) : (
           types.map((type) => (
-            <div key={type} className="flex items-center justify-between gap-3 text-sm">
-              <span className="font-medium">{type}</span>
+            <div key={type} className="flex min-w-0 items-center justify-between gap-3 text-sm">
+              <span className="min-w-0 break-words font-medium">{type}</span>
               <span className="font-semibold text-zinc-600 dark:text-zinc-300">
                 {workload.frequencyByType[type]}
               </span>

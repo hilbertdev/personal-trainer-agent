@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.2.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
   </ItemGroup>
 
@@ -21,10 +22,7 @@
   </ItemGroup>
 
   <Target Name="PublishTrainingRuntimeModules" BeforeTargets="Build">
-    <MSBuild
-      Projects="@(TrainingRuntimeModule)"
-      Targets="Publish"
-      Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);PublishDir=$(MSBuildProjectDirectory)/$(IntermediateOutputPath)training-runtime-modules/;UseAppHost=false" />
+    <MSBuild Projects="@(TrainingRuntimeModule)" Targets="Publish" Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);PublishDir=$(MSBuildProjectDirectory)/$(IntermediateOutputPath)training-runtime-modules/;UseAppHost=false" />
   </Target>
 
   <Target Name="CopyTrainingRuntimeModules" AfterTargets="Build">
@@ -32,14 +30,8 @@
       <TrainingRuntimeModuleOutput Include="$(IntermediateOutputPath)training-runtime-modules/**/*.*" />
       <TrainingRuntimeModuleNativeOutput Include="$(IntermediateOutputPath)training-runtime-modules/runtimes/$(TrainingRuntimeIdentifier)/native/*.*" />
     </ItemGroup>
-    <Copy
-      SourceFiles="@(TrainingRuntimeModuleOutput)"
-      DestinationFiles="@(TrainingRuntimeModuleOutput->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')"
-      SkipUnchangedFiles="true" />
-    <Copy
-      SourceFiles="@(TrainingRuntimeModuleNativeOutput)"
-      DestinationFolder="$(OutputPath)"
-      SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(TrainingRuntimeModuleOutput)" DestinationFiles="@(TrainingRuntimeModuleOutput->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(TrainingRuntimeModuleNativeOutput)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
   </Target>
 
   <Target Name="CopyTrainingRuntimeModulesToPublish" AfterTargets="Publish">
@@ -47,13 +39,7 @@
       <TrainingRuntimeModulePublishOutput Include="$(IntermediateOutputPath)training-runtime-modules/**/*.*" />
       <TrainingRuntimeModuleNativePublishOutput Include="$(IntermediateOutputPath)training-runtime-modules/runtimes/$(TrainingRuntimeIdentifier)/native/*.*" />
     </ItemGroup>
-    <Copy
-      SourceFiles="@(TrainingRuntimeModulePublishOutput)"
-      DestinationFiles="@(TrainingRuntimeModulePublishOutput->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
-      SkipUnchangedFiles="true" />
-    <Copy
-      SourceFiles="@(TrainingRuntimeModuleNativePublishOutput)"
-      DestinationFolder="$(PublishDir)"
-      SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(TrainingRuntimeModulePublishOutput)" DestinationFiles="@(TrainingRuntimeModulePublishOutput->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(TrainingRuntimeModuleNativePublishOutput)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
   </Target>
 </Project>

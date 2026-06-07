@@ -21,6 +21,49 @@ public sealed class TrainingProgramsController(ITrainingProgramService trainingP
         return CreatedAtAction(nameof(GetOverview), new { id = program.Id }, TrainingProgramContractMapper.ToResponse(program));
     }
 
+    [HttpGet(Name = "ListTrainingPrograms")]
+    [ProducesResponseType(typeof(IReadOnlyList<ProgramSummaryResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<ProgramSummaryResponse>>> List(
+        [FromQuery] Guid athleteId,
+        CancellationToken cancellationToken)
+    {
+        var programs = await trainingProgramService.ListProgramsAsync(athleteId, cancellationToken);
+        return Ok(programs.Select(TrainingProgramContractMapper.ToSummary).ToList());
+    }
+
+    [HttpPost("import", Name = "ImportTrainingProgram")]
+    [ProducesResponseType(typeof(TrainingProgramResponse), StatusCodes.Status201Created)]
+    public async Task<ActionResult<TrainingProgramResponse>> Import(
+        ImportProgramRequest request,
+        CancellationToken cancellationToken)
+    {
+        var program = await trainingProgramService.ImportProgramAsync(
+            TrainingProgramContractMapper.ToCommand(request),
+            cancellationToken);
+
+        return CreatedAtAction(nameof(GetOverview), new { id = program.Id }, TrainingProgramContractMapper.ToResponse(program));
+    }
+
+    [HttpPost("{id:guid}/end", Name = "EndTrainingProgram")]
+    [ProducesResponseType(typeof(TrainingProgramResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TrainingProgramResponse>> End(
+        Guid id,
+        EndProgramRequest? request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var endDate = request?.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow.Date);
+            var program = await trainingProgramService.EndProgramAsync(id, endDate, cancellationToken);
+            return Ok(TrainingProgramContractMapper.ToResponse(program));
+        }
+        catch (InvalidOperationException exception)
+        {
+            return NotFoundProblem(exception.Message);
+        }
+    }
+
     [HttpPost("{id:guid}/mesocycles", Name = "AddMesocycle")]
     [ProducesResponseType(typeof(MesocycleResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

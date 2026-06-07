@@ -32,6 +32,78 @@ public sealed class TrainingProgramService(
         return await trainingProgramRepository.SaveProgramAsync(program, cancellationToken);
     }
 
+    public async Task<TrainingProgram> ImportProgramAsync(
+        ImportProgramCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(command.Name);
+
+        if (command.EndDate is not null && command.EndDate < command.StartDate)
+        {
+            throw new ArgumentException("Program end date must be on or after the start date.", nameof(command));
+        }
+
+        var program = await CreateTrainingProgramAsync(
+            new CreateTrainingProgramCommand(command.Name, command.AthleteId, command.StartDate, command.EndDate),
+            cancellationToken);
+
+        foreach (var mesocycle in command.Mesocycles)
+        {
+            var savedMesocycle = await AddMesocycleAsync(
+                program.Id,
+                new AddMesocycleCommand(mesocycle.Name, mesocycle.StartDate, mesocycle.DurationWeeks),
+                cancellationToken);
+
+            foreach (var weeklyPlan in mesocycle.WeeklyPlans)
+            {
+                var savedWeeklyPlan = await AddWeeklyPlanAsync(
+                    program.Id,
+                    new AddWeeklyPlanCommand(savedMesocycle.Id, weeklyPlan.WeekNumber),
+                    cancellationToken);
+
+                foreach (var workout in weeklyPlan.Workouts)
+                {
+                    await AddWorkoutTemplateAsync(
+                        program.Id,
+                        new AddWorkoutTemplateCommand(
+                            savedWeeklyPlan.Id,
+                            workout.Name,
+                            workout.DayOfWeek,
+                            workout.Exercises,
+                            workout.WorkoutType,
+                            workout.Description),
+                        cancellationToken);
+                }
+            }
+        }
+
+        return await trainingProgramRepository.GetProgramAsync(program.Id, cancellationToken) ?? program;
+    }
+
+    public Task<IReadOnlyList<TrainingProgram>> ListProgramsAsync(
+        Guid athleteId,
+        CancellationToken cancellationToken = default)
+    {
+        return trainingProgramRepository.ListProgramsAsync(athleteId, cancellationToken);
+    }
+
+    public async Task<TrainingProgram> EndProgramAsync(
+        Guid programId,
+        DateOnly endDate,
+        CancellationToken cancellationToken = default)
+    {
+        var program = await trainingProgramRepository.GetProgramAsync(programId, cancellationToken)
+            ?? throw new InvalidOperationException($"Training program '{programId}' was not found.");
+
+        if (endDate < program.StartDate)
+        {
+            endDate = program.StartDate;
+        }
+
+        await trainingProgramRepository.SaveProgramAsync(program with { EndDate = endDate }, cancellationToken);
+        return await trainingProgramRepository.GetProgramAsync(programId, cancellationToken) ?? program with { EndDate = endDate };
+    }
+
     public async Task<Mesocycle> AddMesocycleAsync(
         Guid programId,
         AddMesocycleCommand command,

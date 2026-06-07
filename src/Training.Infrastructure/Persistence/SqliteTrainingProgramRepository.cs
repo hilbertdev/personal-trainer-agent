@@ -228,6 +228,37 @@ public sealed class SqliteTrainingProgramRepository(SqliteConnectionFactory conn
         return await LoadProgramAsync(connection, programId, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<TrainingProgram>> ListProgramsAsync(
+        Guid athleteId,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureSchemaAsync(cancellationToken);
+
+        await using var connection = connectionFactory.CreateConnection();
+        var ids = await connection.QueryAsync<string>(
+            new CommandDefinition(
+                """
+                SELECT id
+                FROM training_programs
+                WHERE athlete_id = @AthleteId
+                ORDER BY start_date DESC, name;
+                """,
+                new { AthleteId = athleteId.ToString() },
+                cancellationToken: cancellationToken));
+
+        var programs = new List<TrainingProgram>();
+        foreach (var id in ids)
+        {
+            var program = await LoadProgramAsync(connection, Guid.Parse(id), cancellationToken);
+            if (program is not null)
+            {
+                programs.Add(program);
+            }
+        }
+
+        return programs;
+    }
+
     public async Task<TrainingProgramOverview?> GetProgramOverviewAsync(
         Guid programId,
         CancellationToken cancellationToken = default)
