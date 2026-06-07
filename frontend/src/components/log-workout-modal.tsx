@@ -3,6 +3,7 @@
 import { HeartPulse, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { inputClassName, textareaClassName } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import {
   buildQuickFillWorkout,
@@ -226,11 +227,11 @@ export function LogWorkoutModal({
   };
 
   const footer = (
-    <div className="flex items-center justify-between gap-3">
-      <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto" onClick={onClose}>
         Cancel
       </Button>
-      <Button type="button" disabled={!canSave} onClick={handleSave}>
+      <Button type="button" disabled={!canSave} className="w-full sm:w-auto" onClick={handleSave}>
         Save workout
       </Button>
     </div>
@@ -259,7 +260,7 @@ export function LogWorkoutModal({
           <p className="text-sm font-bold">Session details</p>
           <span className="text-xs text-zinc-400">optional</span>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <OptionalNumberField
             label="Avg HR (bpm)"
             value={session.avgHeartRate}
@@ -297,7 +298,7 @@ export function LogWorkoutModal({
             onChange={(event) => updateSession({ notes: event.target.value })}
             placeholder="How did the session feel?"
             rows={2}
-            className="mt-1 w-full resize-none rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+            className={textareaClassName}
           />
         </label>
       </div>
@@ -313,20 +314,20 @@ export function LogWorkoutModal({
                 value={exercise.name}
                 onChange={(event) => updateExercise(index, { name: event.target.value })}
                 placeholder="Exercise name (e.g. Bench Press)"
-                className="w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+                className={inputClassName}
               />
               <button
                 type="button"
                 aria-label="Remove exercise"
                 onClick={() => removeExercise(index)}
                 disabled={exercises.length === 1}
-                className="shrink-0 rounded-full p-2 text-zinc-400 transition hover:bg-zinc-950/10 disabled:opacity-40 dark:hover:bg-white/10"
+                className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 disabled:opacity-40 dark:hover:bg-white/10"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <NumberField
                 label="Sets"
                 value={exercise.sets}
@@ -429,7 +430,7 @@ export function LogWorkoutModal({
                                 customName: "",
                               })
                             }
-                            className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                            className={`min-h-11 rounded-full border px-3 py-2 text-xs font-semibold transition ${
                               selected
                                 ? "border-lime-400 bg-lime-300 text-zinc-950"
                                 : "border-zinc-200 bg-white/80 text-zinc-600 hover:border-lime-300 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200"
@@ -461,7 +462,7 @@ export function LogWorkoutModal({
                           })
                         }
                         placeholder="e.g. Hammer Strength Incline Press"
-                        className="mt-1 w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+                        className={inputClassName}
                       />
                     </label>
                     <label className="block">
@@ -470,7 +471,7 @@ export function LogWorkoutModal({
                         value={substitutionDrafts[index]?.reason ?? ""}
                         onChange={(event) => updateSubstitutionDraft(index, { reason: event.target.value })}
                         placeholder="e.g. Smith machine unavailable"
-                        className="mt-1 w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+                        className={inputClassName}
                       />
                     </label>
                   </div>
@@ -529,7 +530,7 @@ function OptionalNumberField({
           const next = event.target.valueAsNumber;
           onChange(Number.isNaN(next) ? null : next);
         }}
-        className="mt-1 w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+        className={inputClassName}
       />
     </label>
   );
@@ -563,7 +564,7 @@ function NumberField({
           const next = event.target.valueAsNumber;
           onChange(Number.isNaN(next) ? 0 : next);
         }}
-        className="mt-1 w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-white/5 dark:text-white"
+        className={inputClassName}
       />
     </label>
   );

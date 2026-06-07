@@ -74,7 +74,7 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
               <Badge tone="lime">Active Mesocycle</Badge>
               <Badge tone="zinc">{definition.label}</Badge>
             </div>
-            <h2 className="max-w-full break-words text-2xl font-black leading-tight tracking-tight [overflow-wrap:anywhere] sm:text-5xl">
+            <h2 className="max-w-full break-words text-2xl font-black leading-tight tracking-tight [overflow-wrap:anywhere] md:text-3xl lg:text-4xl xl:text-5xl">
               {program.name}
             </h2>
             <p className="mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-300">
@@ -94,7 +94,7 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-700">
               Program progress
             </p>
-            <h2 className="text-5xl font-black tracking-tight">{progressPercent}%</h2>
+            <h2 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">{progressPercent}%</h2>
             <p className="text-sm font-medium text-zinc-700">of the mesocycle complete</p>
           </CardHeader>
           <Progress value={progressPercent} className="bg-zinc-950/15" />
@@ -208,7 +208,7 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
             </div>
           )}
 
-          <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {activeWeek.days
               .filter((day) => day.workoutType !== null)
               .map((day) => {
@@ -244,7 +244,7 @@ export function ActiveMesocycleView({ program }: { program: Program }) {
                               workout: day.workout,
                             })
                           }
-                          className="shrink-0 rounded-full p-2 text-zinc-400 transition hover:bg-zinc-950/10 dark:hover:bg-white/10"
+                          className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 dark:hover:bg-white/10"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>

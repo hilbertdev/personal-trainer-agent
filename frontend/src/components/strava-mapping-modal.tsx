@@ -3,6 +3,7 @@
 import { ArrowRight, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { selectClassName } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import type { LoggedWorkout, Program, StravaActivity } from "@/lib/program";
 import { useProgram } from "@/program-context";
@@ -33,15 +34,15 @@ export function StravaMappingModal({
   };
 
   const footer = (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         {pendingMappings.length} workout{pendingMappings.length === 1 ? "" : "s"} mapped
       </p>
-      <div className="flex items-center gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+        <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="button" disabled={!canConfirm} onClick={handleConfirm}>
+        <Button type="button" disabled={!canConfirm} className="w-full sm:w-auto" onClick={handleConfirm}>
           <Link2 className="h-4 w-4" /> Confirm Mapping
         </Button>
       </div>
@@ -121,7 +122,7 @@ function WorkoutMappingRow({
       <select
         value={selectedActivityId}
         onChange={(event) => onSelect(event.target.value || null)}
-        className="w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-lime-400 focus:ring-2 focus:ring-lime-300 dark:border-white/15 dark:bg-zinc-900 dark:text-white"
+        className={selectClassName}
       >
         <option value="">No activity</option>
         {activities.map((activity) => {

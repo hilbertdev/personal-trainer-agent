@@ -26,6 +26,7 @@ import {
   type WorkoutTemplateDto,
 } from "@/lib/training-api";
 import { useProgram } from "@/program-context";
+import { inputClassName } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type Stage = "exercises" | "saving" | "done";
@@ -192,8 +193,8 @@ export function LiveWorkoutView({
 
   return (
     <div className="grid gap-4">
-      <section className="flex items-center justify-between gap-3">
-        <div>
+      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <div className="mb-1 flex items-center gap-2">
             <Badge tone="lime">Live workout</Badge>
             <Badge tone="zinc">{programName}</Badge>
@@ -207,7 +208,7 @@ export function LiveWorkoutView({
             </p>
           )}
         </div>
-        <Button type="button" variant="ghost" size="sm" onClick={handleExit}>
+        <Button type="button" variant="ghost" size="sm" className="self-start sm:self-auto" onClick={handleExit}>
           <X className="h-4 w-4" aria-hidden="true" /> Quit
         </Button>
       </section>
@@ -252,51 +253,53 @@ export function LiveWorkoutView({
             </Field>
 
             <div className="grid gap-2">
-              <div className="grid grid-cols-[2.5rem_1fr_1fr_2.25rem] items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                <span>Set</span>
-                <span>Reps</span>
-                <span>Weight (kg)</span>
-                <span className="sr-only">Remove</span>
-              </div>
-              {draft.sets.map((set, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-[2.5rem_1fr_1fr_2.25rem] items-center gap-2"
-                >
-                  <span className="text-center text-sm font-bold text-zinc-500 dark:text-zinc-400">
-                    {index + 1}
-                  </span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    min={0}
-                    value={set.reps}
-                    aria-label={`Set ${index + 1} reps`}
-                    onChange={(event) => updateSet(index, "reps", event.target.value)}
-                    className={cn(inputClass, "tabular-nums")}
-                  />
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    min={0}
-                    value={set.weight}
-                    aria-label={`Set ${index + 1} weight`}
-                    onChange={(event) => updateSet(index, "weight", event.target.value)}
-                    className={cn(inputClass, "tabular-nums")}
-                  />
-                  <button
-                    type="button"
-                    aria-label={`Remove set ${index + 1}`}
-                    disabled={draft.sets.length <= 1}
-                    onClick={() => removeSet(index)}
-                    className="flex h-9 w-9 touch-manipulation items-center justify-center rounded-2xl text-zinc-400 transition-colors hover:bg-zinc-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 disabled:opacity-30 dark:hover:bg-white/10"
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden="true" />
-                  </button>
+              <div className="overflow-x-auto">
+                <div className="grid min-w-[16rem] grid-cols-[2.5rem_1fr_1fr_2.75rem] items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <span>Set</span>
+                  <span>Reps</span>
+                  <span>Weight (kg)</span>
+                  <span className="sr-only">Remove</span>
                 </div>
-              ))}
+                {draft.sets.map((set, index) => (
+                  <div
+                    key={index}
+                    className="grid min-w-[16rem] grid-cols-[2.5rem_1fr_1fr_2.75rem] items-center gap-2"
+                  >
+                    <span className="text-center text-sm font-bold text-zinc-500 dark:text-zinc-400">
+                      {index + 1}
+                    </span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      min={0}
+                      value={set.reps}
+                      aria-label={`Set ${index + 1} reps`}
+                      onChange={(event) => updateSet(index, "reps", event.target.value)}
+                      className={cn(inputClass, "tabular-nums")}
+                    />
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      min={0}
+                      value={set.weight}
+                      aria-label={`Set ${index + 1} weight`}
+                      onChange={(event) => updateSet(index, "weight", event.target.value)}
+                      className={cn(inputClass, "tabular-nums")}
+                    />
+                    <button
+                      type="button"
+                      aria-label={`Remove set ${index + 1}`}
+                      disabled={draft.sets.length <= 1}
+                      onClick={() => removeSet(index)}
+                      className="flex h-11 w-11 touch-manipulation items-center justify-center rounded-2xl text-zinc-400 transition-colors hover:bg-zinc-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 disabled:opacity-30 dark:hover:bg-white/10"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                ))}
+              </div>
               <Button type="button" variant="secondary" size="sm" className="justify-self-start" onClick={addSet}>
                 <Plus className="h-4 w-4" aria-hidden="true" /> Add set
               </Button>
@@ -310,7 +313,7 @@ export function LiveWorkoutView({
                     key={option.id}
                     type="button"
                     onClick={() => setDraft({ ...draft, exerciseName: option.exerciseName })}
-                    className="touch-manipulation rounded-full border border-zinc-300 px-2.5 py-1 font-medium transition-colors hover:bg-zinc-950/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 dark:border-white/15 dark:hover:bg-white/10"
+                    className="min-h-11 touch-manipulation rounded-full border border-zinc-300 px-3 py-2 font-medium transition-colors hover:bg-zinc-950/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 dark:border-white/15 dark:hover:bg-white/10"
                   >
                     {option.exerciseName}
                   </button>
@@ -525,8 +528,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-const inputClass =
-  "w-full rounded-2xl border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus-visible:border-lime-400 focus-visible:ring-2 focus-visible:ring-lime-300 dark:border-white/15 dark:bg-zinc-900 dark:text-white";
+const inputClass = inputClassName;
 
 function createDraft(workout: WorkoutTemplateDto, index: number): ExerciseDraft {
   const exercise = workout.exercises[index];

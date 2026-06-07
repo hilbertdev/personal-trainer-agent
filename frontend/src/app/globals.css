@@ -34,4 +34,12 @@ body {
   font-family: var(--app-font-sans);
   margin: 0;
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
 }
