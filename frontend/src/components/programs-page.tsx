@@ -49,7 +49,7 @@ export function ProgramsPage() {
   };
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 w-full gap-4">
       <section className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-2xl font-black tracking-tight md:text-3xl lg:text-4xl">Programs</h2>
@@ -151,9 +151,9 @@ function ProgramCard({
               <Badge tone={archived ? "zinc" : "lime"}>{archived ? "Archived" : "Active"}</Badge>
             </div>
             <CardTitle className="break-words text-2xl">{program.name}</CardTitle>
-            <CardDescription className="mt-1 flex items-center gap-1.5">
+            <CardDescription className="mt-1 flex flex-wrap items-center gap-1.5 break-words">
               <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="tabular-nums">
+              <span className="break-words tabular-nums">
                 {formatDate(program.startDate)}
                 {program.endDate ? ` – ${formatDate(program.endDate)}` : ""}
               </span>
