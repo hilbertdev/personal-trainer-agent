@@ -33,9 +33,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               Personal Trainer Agent
             </h1>
           </div>
-          <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
-            <Button type="button" size="sm" className="flex-1 sm:flex-none" onClick={openWizard}>
-              <Plus className="h-4 w-4" aria-hidden="true" /> Create Workout Plan
+          <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:justify-end">
+            <Button type="button" size="sm" className="min-w-0 flex-1 sm:flex-none" onClick={openWizard}>
+              <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="sm:hidden">Create Plan</span>
+              <span className="hidden sm:inline">Create Workout Plan</span>
             </Button>
             <div className="shrink-0">
               <ThemeToggle />
@@ -81,7 +83,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             />
           </>
         )}
-        {children}
+        <div className="min-w-0 w-full">{children}</div>
       </div>
     </main>
   );

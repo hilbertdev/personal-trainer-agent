@@ -50,13 +50,15 @@ export function CurrentWorkoutPage() {
   }
 
   return (
-    <div className="grid gap-4">
-      <section>
-        <div className="mb-1 flex items-center gap-2">
+    <div className="grid min-w-0 w-full gap-4">
+      <section className="min-w-0">
+        <div className="mb-1 flex flex-wrap items-center gap-2">
           <Badge tone="lime">Current Workout</Badge>
           <Badge tone="zinc">{programName}</Badge>
         </div>
-        <h2 className="text-2xl font-black tracking-tight md:text-3xl lg:text-4xl">{todayLabel}</h2>
+        <h2 className="min-w-0 break-words text-2xl font-black tracking-tight md:text-3xl lg:text-4xl">
+          {todayLabel}
+        </h2>
       </section>
 
       <div aria-live="polite">
@@ -90,7 +92,7 @@ export function CurrentWorkoutPage() {
                 <CardTitle className="break-words text-2xl">
                   {today.workoutTemplate.workoutType ?? today.workoutTemplate.name}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="break-words">
                   {today.workoutTemplate.exercises.length} exercises
                   {today.workoutTemplate.description ? ` · ${today.workoutTemplate.description}` : ""}
                 </CardDescription>
@@ -99,7 +101,7 @@ export function CurrentWorkoutPage() {
             </div>
           </CardHeader>
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-2 sm:grid-cols-2">
             {today.workoutTemplate.exercises.map((exercise) => (
               <div
                 key={exercise.id}

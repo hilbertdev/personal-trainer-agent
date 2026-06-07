@@ -59,11 +59,13 @@ export function BaselineWeekView({ program }: { program: Program }) {
   };
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 w-full gap-4">
       <section className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <Card className="relative overflow-hidden">
-          <div className="absolute right-[-4rem] top-[-4rem] h-40 w-40 rounded-full bg-lime-300/20 blur-3xl" />
-          <CardHeader className="relative">
+        <Card className="relative">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute right-[-4rem] top-[-4rem] h-40 w-40 rounded-full bg-lime-300/20 blur-3xl" />
+          </div>
+          <CardHeader className="relative min-w-0">
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <Badge tone="amber">Collecting Baseline Week</Badge>
               <Badge tone="zinc">{definition.label}</Badge>
@@ -72,7 +74,7 @@ export function BaselineWeekView({ program }: { program: Program }) {
             <h2 className="max-w-full break-words text-2xl font-black leading-tight tracking-tight [overflow-wrap:anywhere] md:text-3xl lg:text-4xl xl:text-5xl">
               {program.name}
             </h2>
-            <p className="mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-300">
+            <p className="mt-4 min-w-0 max-w-full break-words text-base text-zinc-600 dark:text-zinc-300">
               Log each scheduled workout in your weekly cycle. Your first completed week becomes the
               baseline, the source of truth we use to generate the rest of the mesocycle.
             </p>
