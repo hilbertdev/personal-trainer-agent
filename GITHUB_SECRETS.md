@@ -10,3 +10,4 @@
 | `RESEND_API_KEY` | Resend email API key |
 | `LAMBDA_FUNCTION_NAME` | From `terraform output lambda_function_name` |
 | `DATABASE_CONNECTION_STRING` | Optional — enables CI migration step |
+| `EXPO_TOKEN` | EAS build token (mobile only) |

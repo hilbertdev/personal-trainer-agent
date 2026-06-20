@@ -31,6 +31,19 @@ docker compose -f docker-compose.saas.yml up
 
 See `src/backend/README.md` for API endpoints and migration commands.
 
+## Mobile (Expo)
+
+React Native app under `src/mobile/` with Expo Router, OTP auth, and SecureStore token storage.
+
+```bash
+cd src/mobile
+cp .env.example .env
+npm install
+npm start
+```
+
+See `src/mobile/README.md` for simulator API URLs and EAS build instructions.
+
 ## Recommended folder structure
 
 ```text
