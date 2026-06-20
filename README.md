@@ -14,6 +14,23 @@ This beta uses Onion Architecture so the platform models training concepts while
 
 The app defaults to SQLite at `App_Data/training.db`, so beta hosting can start near $0/month without a managed database.
 
+## QBS SaaS backend
+
+A production-oriented SaaS API scaffolded with [QBS Dev Kit](https://github.com/Quantabridges-Solutions/qbs-dev-kit) lives under `src/backend/`:
+
+- **PersonalTrainer.Api** — thin controllers, JWT, health checks, Scalar docs
+- **PersonalTrainer.Application** — DTOs and service contracts (Traditional Services)
+- **PersonalTrainer.Domain** — multi-tenant entities
+- **PersonalTrainer.Infrastructure** — EF Core + PostgreSQL, Redis cache, OTP auth
+
+Run locally with Postgres + Redis:
+
+```bash
+docker compose -f docker-compose.saas.yml up
+```
+
+See `src/backend/README.md` for API endpoints and migration commands.
+
 ## Recommended folder structure
 
 ```text

@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="PersonalTrainer.Api/PersonalTrainer.Api.csproj" />
+  <Project Path="PersonalTrainer.Application/PersonalTrainer.Application.csproj" />
+  <Project Path="PersonalTrainer.Domain/PersonalTrainer.Domain.csproj" />
+  <Project Path="PersonalTrainer.Infrastructure/PersonalTrainer.Infrastructure.csproj" />
+  <Project Path="PersonalTrainer.Tests/PersonalTrainer.Tests.csproj" />
+</Solution>
