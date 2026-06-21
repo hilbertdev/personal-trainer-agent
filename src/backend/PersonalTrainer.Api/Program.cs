@@ -44,14 +44,26 @@ builder.Services.AddAuthorization();
 
 var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]?
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-    ?? ["http://localhost:3000", "http://localhost:5173"];
+    ?? ["http://localhost:3000", "http://localhost:5173", "http://localhost:8081", "http://127.0.0.1:8081"];
+var allowLocalDevOrigins = builder.Configuration.GetValue("Cors:AllowLocalDevOrigins", false);
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins(allowedOrigins)
-            .WithMethods("GET", "POST", "PUT", "DELETE")
-            .AllowCredentials());
+    {
+        if (allowLocalDevOrigins)
+        {
+            policy.SetIsOriginAllowed(IsLocalDevOrigin);
+        }
+        else
+        {
+            policy.WithOrigins(allowedOrigins);
+        }
+
+        policy.WithMethods("GET", "POST", "PUT", "DELETE")
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -110,5 +122,23 @@ if (!app.Environment.IsEnvironment("Testing"))
 }
 
 app.Run();
+
+static bool IsLocalDevOrigin(string origin)
+{
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+    {
+        return false;
+    }
+
+    if (uri.Scheme is not ("http" or "https"))
+    {
+        return false;
+    }
+
+    return uri.Host is "localhost" or "127.0.0.1"
+        || uri.Host.StartsWith("192.168.", StringComparison.Ordinal)
+        || uri.Host.StartsWith("10.", StringComparison.Ordinal)
+        || uri.Host.StartsWith("172.", StringComparison.Ordinal);
+}
 
 public partial class Program;

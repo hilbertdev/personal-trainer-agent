@@ -1,12 +1,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY *.sln ./
 COPY PersonalTrainer.Api/PersonalTrainer.Api.csproj PersonalTrainer.Api/
 COPY PersonalTrainer.Application/PersonalTrainer.Application.csproj PersonalTrainer.Application/
 COPY PersonalTrainer.Infrastructure/PersonalTrainer.Infrastructure.csproj PersonalTrainer.Infrastructure/
 COPY PersonalTrainer.Domain/PersonalTrainer.Domain.csproj PersonalTrainer.Domain/
-RUN dotnet restore
+RUN dotnet restore PersonalTrainer.Api/PersonalTrainer.Api.csproj
 
 COPY . .
 RUN dotnet publish PersonalTrainer.Api/PersonalTrainer.Api.csproj \

@@ -1,7 +1,21 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+import { getActiveOrgId, getAuthToken } from '@/src/lib/secureStore';
 
-const baseURL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5075';
+const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+
+/**
+ * Web dev uses Metro's `/api` proxy (see metro.config.js) so requests stay same-origin
+ * and avoid browser CORS. Native Expo Go still needs an absolute LAN URL in `.env`.
+ */
+const baseURL =
+  configuredApiUrl && configuredApiUrl.length > 0
+    ? configuredApiUrl
+    : Platform.OS === 'web'
+      ? ''
+      : 'http://localhost:5075';
+
+const PUBLIC_AUTH_PATHS = ['/api/auth/request-otp', '/api/auth/verify-otp'];
 
 export const api = axios.create({
   baseURL,
@@ -10,12 +24,21 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync('auth_token');
+  const path = config.url ?? '';
+  const isPublicAuthRequest = PUBLIC_AUTH_PATHS.some(
+    (publicPath) => path === publicPath || path.endsWith(publicPath),
+  );
+
+  if (isPublicAuthRequest) {
+    return config;
+  }
+
+  const token = await getAuthToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  const orgId = await SecureStore.getItemAsync('active_org_id');
+  const orgId = await getActiveOrgId();
   if (orgId) {
     config.headers['X-Organization-Id'] = orgId;
   }
